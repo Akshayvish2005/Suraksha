@@ -770,7 +770,11 @@ def register_routes(app):
     @app.get("/api/v1/me")
     @login_required
     def api_me():
-        u = dict(g.user); u.pop("password_hash", None)
+        u = dict(g.user)
+        u.pop("password_hash", None)
+        # Browser/API clients can read this token and send it as X-CSRFToken
+        # when making authenticated state-changing API requests.
+        u["csrf_token"] = session.get("_csrf_token")
         return jsonify(u)
 
     @app.get("/api/v1/modules")
