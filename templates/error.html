@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block title %}{{ code }} · Suraksha{% endblock %}{% block content %}<div class="result panel"><h1>{{ code }}</h1><p>{{ message }}</p><a class="button" href="{{ url_for('dashboard') if session.get('user_id') else url_for('login') }}">Return</a></div>{% endblock %}

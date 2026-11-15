@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha — Official Disaster Safety Competency Certificates.">
+    <title>Suraksha — Certificates</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #1E293B;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: #1E3A8A;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 20px 18px;
+            color: #fff;
+            font-size: 19px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-shield {
+            width: 34px;
+            height: 34px;
+            background: #2563EB;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+
+        .sidebar-nav {
+            padding: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: rgba(255, 255, 255, 0.35);
+            padding: 14px 10px 5px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: #2563EB;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .sidebar-bottom {
+            padding: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #EF4444;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            background: #fff;
+            padding: 14px 28px;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar h1 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .topbar-subtitle {
+            font-size: 12.5px;
+            color: #64748B;
+            margin-top: 2px;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: #F8FAFC;
+            padding: 5px 12px 5px 6px;
+            border-radius: 30px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #1E3A8A;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .content-area {
+            padding: 28px;
+            max-width: 1100px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Banner */
+        .cert-banner {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            color: #fff;
+            padding: 26px 28px;
+            border-radius: 14px;
+            margin-bottom: 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 14px rgba(30, 58, 138, 0.15);
+        }
+
+        .cert-banner h2 {
+            font-size: 21px;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .cert-banner p {
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.85);
+            max-width: 650px;
+            line-height: 1.5;
+        }
+
+        .cert-badge-count {
+            background: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            padding: 14px 22px;
+            text-align: center;
+        }
+
+        .cert-badge-count .num {
+            font-size: 28px;
+            font-weight: 700;
+            display: block;
+        }
+
+        .cert-badge-count .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        /* Grid */
+        .cert-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 20px;
+        }
+
+        .cert-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .cert-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        }
+
+        .cert-card-header {
+            padding: 18px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .cert-card-header.unlocked {
+            background: linear-gradient(to right, #F0FDF4, #DCFCE7);
+        }
+
+        .cert-card-header.locked {
+            background: #F8FAFC;
+        }
+
+        .hazard-tag {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .tag-earthquake { background: #FEF3C7; color: #92400E; }
+        .tag-flood { background: #DBEAFE; color: #1E40AF; }
+        .tag-fire { background: #FEE2E2; color: #991B1B; }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 9px;
+            border-radius: 12px;
+        }
+
+        .status-badge.unlocked {
+            background: #22C55E;
+            color: #fff;
+        }
+
+        .status-badge.locked {
+            background: #E2E8F0;
+            color: #64748B;
+        }
+
+        .cert-card-body {
+            padding: 20px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .cert-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 8px;
+        }
+
+        .cert-id {
+            font-family: monospace;
+            font-size: 11.5px;
+            color: #64748B;
+            background: #F1F5F9;
+            padding: 3px 7px;
+            border-radius: 4px;
+            display: inline-block;
+            margin-bottom: 16px;
+        }
+
+        .cert-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12.5px;
+            color: #64748B;
+            margin-bottom: 18px;
+            padding-bottom: 12px;
+            border-bottom: 1px dashed #E2E8F0;
+        }
+
+        .cert-meta strong {
+            color: #0F172A;
+        }
+
+        .btn-view-cert {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            padding: 10px;
+            background: #2563EB;
+            color: #fff;
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 600;
+            border-radius: 8px;
+            transition: background 0.15s;
+        }
+
+        .btn-view-cert:hover {
+            background: #1D4ED8;
+        }
+
+        .btn-locked {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 7px;
+            width: 100%;
+            padding: 10px;
+            background: #F1F5F9;
+            color: #64748B;
+            text-decoration: none;
+            font-size: 13px;
+            font-weight: 500;
+            border-radius: 8px;
+            border: 1px dashed #CBD5E1;
+        }
+
+        .btn-locked:hover {
+            background: #E2E8F0;
+            color: #334155;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-shield">🛡️</div>
+            <span>Suraksha</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-section-label">Main Menu</span>
+            <a href="/home" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="/modules" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Learning Modules</span>
+            </a>
+            <a href="/assessments" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Quizzes &amp; Tests</span>
+            </a>
+            <a href="/simulations" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Simulations</span>
+            </a>
+            <a href="/drills" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Virtual Drills</span>
+            </a>
+            <a href="/emergency" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Emergency Plan</span>
+            </a>
+
+            <span class="nav-section-label">Tracking</span>
+            <a href="/progress" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Progress &amp; Analytics</span>
+            </a>
+            <a href="/certificates" class="nav-item active">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                <span>Certificates</span>
+            </a>
+
+            <span class="nav-section-label">Account</span>
+            <a href="/profile" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Profile</span>
+            </a>
+            <a href="/help" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Help &amp; Support</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn">
+                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div>
+                <h1>Safety Certificates</h1>
+                <p class="topbar-subtitle">Recognized disaster preparedness credentials verified by Suraksha</p>
+            </div>
+            <div class="user-chip">
+                <div class="user-avatar" th:text="${userInitials}">KL</div>
+                <div>
+                    <div style="font-size: 13px; font-weight: 600;" th:text="${userName}">Khushi Lakhera</div>
+                    <div style="font-size: 11px; color: #64748B;" th:text="${roleLabel}">Student</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <div class="cert-banner">
+                <div>
+                    <h2>Disaster Preparedness Credentials</h2>
+                    <p>Certificates are officially awarded upon achieving a passing score (60%+) on the module's comprehensive Post-Test assessment. Each credential includes a unique verification identifier.</p>
+                </div>
+                <div class="cert-badge-count">
+                    <span class="num" th:text="${#lists.size(certificates.?[isUnlocked])}">0</span>
+                    <span class="lbl">Earned</span>
+                </div>
+            </div>
+
+            <div class="cert-grid">
+                <div th:each="cert : ${certificates}" class="cert-card">
+                    <div class="cert-card-header" th:classappend="${cert.isUnlocked} ? 'unlocked' : 'locked'">
+                        <span class="hazard-tag"
+                              th:classappend="${cert.hazardCode == 'EARTHQUAKE'} ? 'tag-earthquake' : (${cert.hazardCode == 'FLOOD'} ? 'tag-flood' : 'tag-fire')"
+                              th:text="${cert.hazardName}">Earthquake</span>
+                        <span class="status-badge" th:classappend="${cert.isUnlocked} ? 'unlocked' : 'locked'">
+                            <span th:if="${cert.isUnlocked}">✓ Verified</span>
+                            <span th:unless="${cert.isUnlocked}">🔒 Locked</span>
+                        </span>
+                    </div>
+
+                    <div class="cert-card-body">
+                        <div>
+                            <h3 class="cert-title" th:text="${cert.moduleTitle}">Earthquake Preparedness</h3>
+                            <div class="cert-id" th:if="${cert.isUnlocked}" th:text="'ID: ' + ${cert.certificateId}">ID: SURAKSHA-EQ-0001</div>
+                            <div class="cert-id" th:unless="${cert.isUnlocked}">Required: Pass Post-Test with ≥ 60%</div>
+                        </div>
+
+                        <div>
+                            <div class="cert-meta">
+                                <div>
+                                    <span>Score: </span>
+                                    <strong th:if="${cert.scorePercent != null}" th:text="${cert.scorePercent} + '%'">85%</strong>
+                                    <strong th:unless="${cert.scorePercent != null}">—</strong>
+                                </div>
+                                <div>
+                                    <span>Issued: </span>
+                                    <strong th:if="${cert.issuedAt != null}" th:text="${#temporals.format(cert.issuedAt, 'dd MMM yyyy')}">24 Oct 2026</strong>
+                                    <strong th:unless="${cert.issuedAt != null}">Not yet</strong>
+                                </div>
+                            </div>
+
+                            <a th:if="${cert.isUnlocked}"
+                               th:href="@{/certificates/{moduleId}/view(moduleId=${cert.moduleId})}"
+                               class="btn-view-cert">
+                                <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                                </svg>
+                                <span>View &amp; Print Certificate</span>
+                            </a>
+
+                            <a th:unless="${cert.isUnlocked}"
+                               th:href="@{/modules/{moduleId}/post-test(moduleId=${cert.moduleId})}"
+                               class="btn-locked">
+                                <svg width="15" height="15" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <span>Take Post-Test to Unlock</span>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+

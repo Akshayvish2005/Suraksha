@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha — Virtual Drill Operational Briefing.">
+    <title>Suraksha — Drill Briefing</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            color: #1E293B;
+            min-height: 100vh;
+        }
+
+        .top-navbar {
+            background: #1E3A8A;
+            color: #fff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .briefing-wrap {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            padding: 32px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            background: #EFF6FF;
+            color: #2563EB;
+            margin-bottom: 12px;
+        }
+
+        h1 {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 12px;
+        }
+
+        .meta-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin: 20px 0 28px;
+            padding: 18px;
+            background: #F8FAFC;
+            border-radius: 12px;
+            font-size: 14px;
+        }
+
+        .meta-row {
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .btn-join {
+            display: inline-block;
+            background: #2563EB;
+            color: #fff;
+            padding: 12px 28px;
+            border-radius: 10px;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        .btn-join:hover {
+            background: #1D4ED8;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-navbar">
+        <a href="/home" class="nav-brand">&#128737;&#65039; Suraksha Education System</a>
+        <a href="/drills" class="back-link">&larr; Back to Drills</a>
+    </nav>
+
+    <div class="briefing-wrap">
+        <div class="card">
+            <span class="tag" th:text="${drill.hazardName}">Hazard</span>
+            <h1 th:text="${drill.title}">Drill Title</h1>
+            <p style="color: #64748B; font-size: 14.5px; line-height: 1.5;">
+                Scheduled emergency preparedness drill. All designated school occupants must participate within the
+                assigned operational window.
+            </p>
+
+            <div class="meta-list">
+                <div class="meta-row">
+                    <span style="color:#64748B;">Assigned Drill Role:</span>
+                    <strong style="color:#2563EB;" th:text="${participantRole}">STUDENT</strong>
+                </div>
+                <div class="meta-row">
+                    <span style="color:#64748B;">Scenario Simulation:</span>
+                    <strong th:text="${drill.scenarioTitle}">Scenario</strong>
+                </div>
+                <div class="meta-row">
+                    <span style="color:#64748B;">Start Time:</span>
+                    <strong th:text="${#temporals.format(drill.startTime, 'dd MMM yyyy, HH:mm')}">Date</strong>
+                </div>
+                <div class="meta-row">
+                    <span style="color:#64748B;">End Time:</span>
+                    <strong th:text="${#temporals.format(drill.endTime, 'dd MMM yyyy, HH:mm')}">Date</strong>
+                </div>
+                <div class="meta-row">
+                    <span style="color:#64748B;">Current Status:</span>
+                    <strong style="color:#10B981;" th:text="${drill.status}">SCHEDULED</strong>
+                </div>
+            </div>
+
+            <div style="display:flex; justify-content: flex-end; gap: 12px;">
+                <a href="/drills" class="back-link"
+                    style="color:#64748B; padding:12px 18px; text-decoration:none;">Cancel</a>
+                <a th:if="${inWindow and not isClosed}" th:href="@{/drills/{id}/join(id=${drill.id})}"
+                    class="btn-join">Start Drill Exercise &rarr;</a>
+                <span th:if="${not inWindow and not isClosed}"
+                    style="padding:12px 18px; background:#E2E8F0; border-radius:10px; color:#64748B; font-weight:600; font-size:14px;">Drill
+                    Not Yet Active</span>
+                <a th:if="${isClosed}" th:href="@{/drills/{id}/report(id=${drill.id})}" class="btn-join"
+                    style="background:#10B981;">View Final Report &rarr;</a>
+            </div>
+        </div>
+    </div>
+
+</body>
+
+</html>

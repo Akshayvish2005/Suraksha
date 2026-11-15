@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>{% block title %}Suraksha{% endblock %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="{{ url_for('static', filename='css/app.css') }}">
+{% block head %}{% endblock %}
+</head>
+<body>
+{% if session.get('user_id') %}
+<aside class="sidebar">
+  <a class="brand" href="{{ url_for('dashboard') }}"><span class="shield">🛡</span> Suraksha</a>
+  <div class="nav-label">Workspace</div>
+  <a href="{{ url_for('dashboard') }}">⌂ &nbsp; Dashboard</a>
+  <a href="{{ url_for('modules') }}">📚 &nbsp; Learning modules</a>
+  <a href="{{ url_for('assessments') }}">✓ &nbsp; Assessments</a>
+  <a href="{{ url_for('simulations') }}">⚡ &nbsp; Simulations</a>
+  <a href="{{ url_for('drills') }}">🚨 &nbsp; Virtual drills</a>
+  <a href="{{ url_for('emergency') }}">☎ &nbsp; Emergency plan</a>
+  <a href="{{ url_for('progress') }}">▤ &nbsp; My progress</a>
+  <a href="{{ url_for('certificates') }}">🏅 &nbsp; Certificates</a>
+  <div class="sidebar-bottom">
+    <a href="{{ url_for('profile') }}">👤 &nbsp; Profile</a>
+    <form method="post" action="{{ url_for('logout') }}"><button class="logout">↪ &nbsp; Sign out</button></form>
+  </div>
+</aside>
+{% endif %}
+<main class="{% if session.get('user_id') %}main{% else %}auth-main{% endif %}">
+  {% if session.get('user_id') %}<header class="topbar"><strong>{% block page_heading %}Disaster Preparedness Education System{% endblock %}</strong><span>{{ g.user.full_name if g.user else 'Suraksha' }} · {{ (g.user.role if g.user else '')|replace('_',' ')|title }}</span></header>{% endif %}
+  <section class="content">
+    {% with messages = get_flashed_messages(with_categories=true) %}{% for category,message in messages %}<div class="alert {{ category }}">{{ message }}</div>{% endfor %}{% endwith %}
+    {% block content %}{% endblock %}
+  </section>
+  <footer>© {{ 2026 }} Suraksha · Disaster Preparedness Education System</footer>
+</main>
+</body></html>

@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha Official Certificate of Disaster Preparedness Competency.">
+    <title th:text="'Suraksha Certificate — ' + ${module.title}">Suraksha Certificate</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 30px 20px;
+            color: #1E293B;
+        }
+
+        .action-bar {
+            width: 100%;
+            max-width: 960px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .btn-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: background 0.15s;
+        }
+
+        .btn-back:hover {
+            background: rgba(255, 255, 255, 0.22);
+        }
+
+        .btn-print {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 20px;
+            background: #2563EB;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+            transition: background 0.15s;
+        }
+
+        .btn-print:hover {
+            background: #1D4ED8;
+        }
+
+        /* Certificate Frame */
+        .cert-outer {
+            width: 100%;
+            max-width: 960px;
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+            position: relative;
+        }
+
+        .cert-border-outer {
+            border: 6px double #1E3A8A;
+            padding: 12px;
+            position: relative;
+        }
+
+        .cert-border-inner {
+            border: 2px solid #D97706;
+            padding: 36px 40px;
+            text-align: center;
+            background: radial-gradient(circle at center, #FFFFFF 0%, #FAFAF9 100%);
+            position: relative;
+        }
+
+        .cert-header {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+
+        .cert-emblem {
+            width: 48px;
+            height: 48px;
+            background: #1E3A8A;
+            color: #FBBF24;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            box-shadow: 0 2px 8px rgba(30, 58, 138, 0.3);
+        }
+
+        .cert-org {
+            font-family: 'Cinzel', serif;
+            font-size: 18px;
+            font-weight: 800;
+            letter-spacing: 2.5px;
+            color: #1E3A8A;
+            text-transform: uppercase;
+        }
+
+        .cert-suborg {
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: #64748B;
+            font-weight: 600;
+        }
+
+        .cert-main-title {
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            font-weight: 700;
+            color: #B45309;
+            letter-spacing: 3px;
+            margin: 20px 0 10px;
+            text-transform: uppercase;
+        }
+
+        .cert-presents {
+            font-size: 13.5px;
+            color: #64748B;
+            font-style: italic;
+            margin-bottom: 14px;
+        }
+
+        .cert-recipient {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 14px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #E2E8F0;
+            display: inline-block;
+            min-width: 380px;
+        }
+
+        .cert-reason {
+            max-width: 680px;
+            margin: 0 auto 20px;
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: #334155;
+        }
+
+        .cert-module-badge {
+            display: inline-block;
+            background: #EFF6FF;
+            border: 1px solid #BFDBFE;
+            color: #1E40AF;
+            font-weight: 700;
+            font-size: 16px;
+            padding: 8px 22px;
+            border-radius: 30px;
+            margin-bottom: 24px;
+        }
+
+        .cert-details-row {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin: 20px 0 30px;
+            padding: 16px 20px;
+            background: #F8FAFC;
+            border-radius: 8px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .detail-item {
+            text-align: center;
+        }
+
+        .detail-item .val {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .detail-item .lbl {
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748B;
+            margin-top: 3px;
+        }
+
+        .cert-signatures {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            margin-top: 36px;
+            padding: 0 40px;
+        }
+
+        .sig-block {
+            text-align: center;
+            width: 200px;
+        }
+
+        .sig-line {
+            border-bottom: 1px solid #0F172A;
+            margin-bottom: 6px;
+            padding-bottom: 8px;
+            font-family: 'Playfair Display', serif;
+            font-style: italic;
+            font-size: 18px;
+            color: #1E3A8A;
+        }
+
+        .sig-title {
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #475569;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .sig-org {
+            font-size: 10px;
+            color: #94A3B8;
+        }
+
+        .cert-seal {
+            width: 80px;
+            height: 80px;
+            border: 3px dashed #D97706;
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #B45309;
+            font-size: 9px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            padding: 4px;
+        }
+
+        .seal-star {
+            font-size: 18px;
+            color: #D97706;
+            margin-bottom: 2px;
+        }
+
+        @media print {
+            body {
+                background: #fff;
+                padding: 0;
+            }
+
+            .action-bar {
+                display: none;
+            }
+
+            .cert-outer {
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+
+            .cert-border-outer {
+                border-width: 4px;
+            }
+
+            @page {
+                size: A4 landscape;
+                margin: 1cm;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="action-bar">
+        <a href="/certificates" class="btn-back">
+            <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Certificates</span>
+        </a>
+        <button onclick="window.print()" class="btn-print">
+            <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z" />
+            </svg>
+            <span>Print / Save as PDF</span>
+        </button>
+    </div>
+
+    <div class="cert-outer">
+        <div class="cert-border-outer">
+            <div class="cert-border-inner">
+                <div class="cert-header">
+                    <div class="cert-emblem">🛡️</div>
+                    <div>
+                        <div class="cert-org">Suraksha National Disaster Education</div>
+                        <div class="cert-suborg">Institutional Disaster Management Directorate</div>
+                    </div>
+                </div>
+
+                <div class="cert-main-title">Certificate of Competency</div>
+                <div class="cert-presents">This is proudly presented to</div>
+
+                <div class="cert-recipient" th:text="${userName}">Khushi Lakhera</div>
+
+                <div class="cert-reason">
+                    for outstanding performance and successful completion of official safety curricula, emergency simulation scenarios, and passing the comprehensive post-test assessment in:
+                </div>
+
+                <div class="cert-module-badge" th:text="${module.title}">Earthquake Preparedness &amp; Safety</div>
+
+                <div class="cert-details-row">
+                    <div class="detail-item">
+                        <div class="val" th:text="${score} + '%'">85%</div>
+                        <div class="lbl">Assessment Score</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="val" th:text="${certificateId}">SURAKSHA-EQ-0001</div>
+                        <div class="lbl">Verification ID</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="val" th:text="${#temporals.format(issuedAt, 'dd MMMM yyyy')}">24 October 2026</div>
+                        <div class="lbl">Date of Issue</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="val" style="color: #16A34A;">VERIFIED</div>
+                        <div class="lbl">Credential Status</div>
+                    </div>
+                </div>
+
+                <div class="cert-signatures">
+                    <div class="sig-block">
+                        <div class="sig-line">Rajesh Verma</div>
+                        <div class="sig-title">Safety Officer</div>
+                        <div class="sig-org">Delhi Public School Bhopal</div>
+                    </div>
+
+                    <div class="cert-seal">
+                        <div class="seal-star">★</div>
+                        <div>OFFICIAL</div>
+                        <div>SURAKSHA</div>
+                        <div>SEAL</div>
+                    </div>
+
+                    <div class="sig-block">
+                        <div class="sig-line">Dr. A. Sharma</div>
+                        <div class="sig-title">Disaster Mitigation Lead</div>
+                        <div class="sig-org">Suraksha Directorate</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+

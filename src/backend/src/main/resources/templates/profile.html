@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha — User Profile, Disaster Education Credentials and Settings.">
+    <title>Suraksha — User Profile</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #1E293B;
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            background: #1E3A8A;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 20px 18px;
+            color: #fff;
+            font-size: 19px;
+            font-weight: 700;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logo-shield {
+            width: 34px;
+            height: 34px;
+            background: #2563EB;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+        }
+
+        .sidebar-nav {
+            padding: 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: rgba(255, 255, 255, 0.35);
+            padding: 14px 10px 5px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 9px 12px;
+            border-radius: 7px;
+            color: rgba(255, 255, 255, 0.7);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: all 0.15s;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: #2563EB;
+            color: #fff;
+            font-weight: 600;
+        }
+
+        .sidebar-bottom {
+            padding: 14px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            width: 100%;
+            padding: 8px 12px;
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13px;
+            cursor: pointer;
+            border-radius: 6px;
+            font-family: inherit;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #EF4444;
+        }
+
+        /* Main Content */
+        .main-wrapper {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+
+        .topbar {
+            background: #fff;
+            padding: 14px 28px;
+            border-bottom: 1px solid #E2E8F0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .topbar h1 {
+            font-size: 19px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .topbar-subtitle {
+            font-size: 12.5px;
+            color: #64748B;
+            margin-top: 2px;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            background: #F8FAFC;
+            padding: 5px 12px 5px 6px;
+            border-radius: 30px;
+            border: 1px solid #E2E8F0;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            background: #1E3A8A;
+            color: #fff;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+            font-weight: 700;
+        }
+
+        .content-area {
+            padding: 28px;
+            max-width: 980px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        /* Profile Header Card */
+        .profile-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            padding: 28px;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        .profile-avatar-large {
+            width: 76px;
+            height: 76px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%);
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            font-weight: 700;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.25);
+            flex-shrink: 0;
+        }
+
+        .profile-info h2 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 4px;
+        }
+
+        .profile-meta-row {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            margin-top: 6px;
+        }
+
+        .badge-role {
+            background: #EFF6FF;
+            color: #1D4ED8;
+            font-size: 11.5px;
+            font-weight: 600;
+            padding: 3px 10px;
+            border-radius: 20px;
+            border: 1px solid #BFDBFE;
+        }
+
+        .badge-school {
+            font-size: 13px;
+            color: #64748B;
+        }
+
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #E2E8F0;
+            padding: 18px 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+        }
+
+        .stat-label {
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            color: #64748B;
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        /* Detail Blocks */
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card-block {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            padding: 24px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.03);
+        }
+
+        .card-block h3 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 16px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #F1F5F9;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 13.5px;
+            padding: 9px 0;
+            border-bottom: 1px dashed #F1F5F9;
+        }
+
+        .info-row:last-child {
+            border-bottom: none;
+        }
+
+        .info-row .lbl {
+            color: #64748B;
+        }
+
+        .info-row .val {
+            font-weight: 600;
+            color: #0F172A;
+        }
+
+        .lang-btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 14px;
+        }
+
+        .lang-btn {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #CBD5E1;
+            background: #F8FAFC;
+            border-radius: 8px;
+            font-weight: 600;
+            font-size: 13.5px;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .lang-btn.active {
+            background: #1E3A8A;
+            color: #fff;
+            border-color: #1E3A8A;
+        }
+
+        .lang-btn:hover:not(.active) {
+            background: #E2E8F0;
+        }
+
+        @media (max-width: 768px) {
+            .details-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-shield">🛡️</div>
+            <span>Suraksha</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-section-label">Main Menu</span>
+            <a href="/home" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="/modules" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Learning Modules</span>
+            </a>
+            <a href="/assessments" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Quizzes &amp; Tests</span>
+            </a>
+            <a href="/simulations" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Simulations</span>
+            </a>
+            <a href="/drills" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Virtual Drills</span>
+            </a>
+            <a href="/emergency" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Emergency Plan</span>
+            </a>
+
+            <span class="nav-section-label">Tracking</span>
+            <a href="/progress" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Progress &amp; Analytics</span>
+            </a>
+            <a href="/certificates" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                <span>Certificates</span>
+            </a>
+
+            <span class="nav-section-label">Account</span>
+            <a href="/profile" class="nav-item active">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Profile</span>
+            </a>
+            <a href="/help" class="nav-item">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Help &amp; Support</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn">
+                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Sign Out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+        <header class="topbar">
+            <div>
+                <h1>Learner Profile</h1>
+                <p class="topbar-subtitle">Account credentials, academic details, and personal safety statistics</p>
+            </div>
+            <div class="user-chip">
+                <div class="user-avatar" th:text="${userInitials}">KL</div>
+                <div>
+                    <div style="font-size: 13px; font-weight: 600;" th:text="${userName}">Khushi Lakhera</div>
+                    <div style="font-size: 11px; color: #64748B;" th:text="${roleLabel}">Student</div>
+                </div>
+            </div>
+        </header>
+
+        <main class="content-area">
+            <!-- Profile Card -->
+            <div class="profile-card">
+                <div class="profile-avatar-large" th:text="${userInitials}">KL</div>
+                <div class="profile-info">
+                    <h2 th:text="${fullName}">Khushi Lakhera</h2>
+                    <div class="profile-meta-row">
+                        <span class="badge-role" th:text="${roleLabel}">Student</span>
+                        <span class="badge-school" th:text="'🏫 ' + ${institutionName}">🏫 Delhi Public School Bhopal</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Lessons Completed</div>
+                    <div class="stat-value" th:text="${completedLessons} + ' / ' + ${totalLessons}">9 / 9</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Assessments Taken</div>
+                    <div class="stat-value" th:text="${completedAssessments}">3</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Drills Completed</div>
+                    <div class="stat-value" th:text="${completedDrills}">2</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Preparedness Band</div>
+                    <div class="stat-value" style="color: #16A34A; font-size: 20px;">Well Prepared</div>
+                </div>
+            </div>
+
+            <!-- Details Grid -->
+            <div class="details-grid">
+                <div class="card-block">
+                    <h3>Account Credentials</h3>
+                    <div class="info-row">
+                        <span class="lbl">Username</span>
+                        <span class="val" th:text="${username}">student1</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Official Email</span>
+                        <span class="val" th:text="${email}">student1@dpsbhopal.edu.in</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Registered Institution</span>
+                        <span class="val" th:text="${institutionName}">Delhi Public School Bhopal</span>
+                    </div>
+                    <div class="info-row">
+                        <span class="lbl">Enrolled Group</span>
+                        <span class="val">Class 9-A</span>
+                    </div>
+                </div>
+
+                <div class="card-block">
+                    <h3>Preferences &amp; Language</h3>
+                    <p style="font-size: 13px; color: #64748B;">Select your preferred instructional language for lessons and assessments.</p>
+                    
+                    <form th:action="@{/profile/language}" method="post">
+                        <div class="lang-btn-group">
+                            <button type="submit" name="lang" value="en" class="lang-btn" th:classappend="${language == 'EN'} ? 'active' : ''">English</button>
+                            <button type="submit" name="lang" value="hi" class="lang-btn" th:classappend="${language == 'HI'} ? 'active' : ''">हिन्दी (Hindi)</button>
+                        </div>
+                    </form>
+
+                    <div style="margin-top: 20px; font-size: 12px; color: #94A3B8;">
+                        * Compliant with Disaster Management Act, 2005 and NDMA School Safety Framework.
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</body>
+</html>
+

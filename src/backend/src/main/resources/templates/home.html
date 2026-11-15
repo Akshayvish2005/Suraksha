@@ -1,0 +1,1041 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Suraksha — Your disaster preparedness dashboard. Track learning modules, assessments and drills.">
+    <title>Suraksha — Dashboard</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            display: flex;
+            height: 100vh;
+            overflow: hidden;
+            color: #1E293B;
+        }
+
+        /* ──────────────────────────────────────
+           SIDEBAR
+        ────────────────────────────────────── */
+        .sidebar {
+            width: 240px;
+            background: #1E3A8A;
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            overflow-y: auto;
+            overflow-x: hidden;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 4px;
+        }
+
+        .sidebar::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 22px 20px 18px;
+            color: #fff;
+            font-size: 19px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .logo-shield {
+            width: 34px;
+            height: 34px;
+            background: #2563EB;
+            border-radius: 9px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 17px;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.5);
+        }
+
+        .sidebar-nav {
+            padding: 10px 10px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+        }
+
+        .nav-section-label {
+            font-size: 10px;
+            text-transform: uppercase;
+            letter-spacing: 1.2px;
+            color: rgba(255, 255, 255, 0.35);
+            padding: 14px 10px 5px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 9px;
+            color: rgba(255, 255, 255, 0.68);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+            transition: background 0.15s ease, color 0.15s ease;
+            white-space: nowrap;
+        }
+
+        .nav-item svg {
+            flex-shrink: 0;
+        }
+
+        .nav-item:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        .nav-item.active {
+            background: #2563EB;
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(37, 99, 235, 0.4);
+        }
+
+        .sidebar-bottom {
+            padding: 12px 10px 16px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            flex-shrink: 0;
+        }
+
+        .logout-btn {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 9px;
+            border: none;
+            background: none;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 13.5px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background 0.15s, color 0.15s;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: #fff;
+        }
+
+        /* ──────────────────────────────────────
+           MAIN AREA
+        ────────────────────────────────────── */
+        .main-area {
+            flex: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            min-width: 0;
+        }
+
+        .main-area::-webkit-scrollbar {
+            width: 5px;
+        }
+
+        .main-area::-webkit-scrollbar-thumb {
+            background: #CBD5E1;
+            border-radius: 4px;
+        }
+
+        /* Topbar */
+        .topbar {
+            background: #fff;
+            border-bottom: 1px solid #E2E8F0;
+            padding: 0 28px;
+            height: 62px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-shrink: 0;
+            position: sticky;
+            top: 0;
+            z-index: 5;
+        }
+
+        .topbar-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .bell-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1.5px solid #E2E8F0;
+            background: #F8FAFC;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: background 0.15s;
+        }
+
+        .bell-btn:hover {
+            background: #EFF6FF;
+            border-color: #BFDBFE;
+        }
+
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            padding: 5px 14px 5px 5px;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 999px;
+            background: #F8FAFC;
+            cursor: pointer;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        .user-chip:hover {
+            background: #EFF6FF;
+            border-color: #BFDBFE;
+        }
+
+        .user-avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: #fff;
+            font-size: 11px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: 0.5px;
+        }
+
+        .user-chip-name {
+            font-size: 13px;
+            font-weight: 600;
+            color: #1E293B;
+        }
+
+        .user-chip-role {
+            font-size: 11px;
+            color: #64748B;
+        }
+
+        /* ──────────────────────────────────────
+           PAGE CONTENT
+        ────────────────────────────────────── */
+        .page-content {
+            padding: 24px 28px 32px;
+        }
+
+        /* Welcome banner */
+        .welcome-banner {
+            background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 60%, #3B82F6 100%);
+            border-radius: 16px;
+            padding: 26px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 26px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .welcome-banner::before {
+            content: '';
+            position: absolute;
+            right: -30px;
+            top: -50px;
+            width: 220px;
+            height: 220px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.06);
+            pointer-events: none;
+        }
+
+        .welcome-banner::after {
+            content: '';
+            position: absolute;
+            right: 100px;
+            bottom: -70px;
+            width: 160px;
+            height: 160px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.05);
+            pointer-events: none;
+        }
+
+        .welcome-text {
+            z-index: 1;
+        }
+
+        .welcome-text h1 {
+            font-size: 21px;
+            font-weight: 700;
+            color: #fff;
+            margin-bottom: 5px;
+        }
+
+        .welcome-text p {
+            font-size: 13.5px;
+            color: rgba(255, 255, 255, 0.72);
+        }
+
+        .welcome-progress {
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            z-index: 1;
+        }
+
+        .progress-ring-wrap {
+            position: relative;
+            width: 82px;
+            height: 82px;
+            flex-shrink: 0;
+        }
+
+        .progress-ring-wrap svg {
+            transform: rotate(-90deg);
+            display: block;
+        }
+
+        .progress-ring-label {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ring-pct {
+            font-size: 17px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1;
+        }
+
+        .ring-lbl {
+            font-size: 9px;
+            color: rgba(255, 255, 255, 0.65);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            margin-top: 2px;
+        }
+
+        .progress-ring-info {
+            color: #fff;
+        }
+
+        .ring-title {
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .ring-sub {
+            font-size: 12px;
+            color: rgba(255, 255, 255, 0.68);
+            margin-top: 3px;
+        }
+
+        /* Section heading */
+        .section-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 14px;
+        }
+
+        .section-header h2 {
+            font-size: 16px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        .section-header a {
+            font-size: 13px;
+            color: #2563EB;
+            text-decoration: none;
+            font-weight: 500;
+        }
+
+        .section-header a:hover {
+            text-decoration: underline;
+        }
+
+        /* ──────────────────────────────────────
+           MODULE CARDS
+        ────────────────────────────────────── */
+        .modules-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+            gap: 15px;
+            margin-bottom: 26px;
+        }
+
+        .module-card {
+            background: #fff;
+            border-radius: 14px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07), 0 1px 2px rgba(0, 0, 0, 0.04);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+
+        .module-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+        }
+
+        /* Coloured top area per hazard */
+        .module-card-top {
+            height: 110px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 52px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .module-card-top::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            opacity: 0.12;
+            background: radial-gradient(circle at 70% 30%, #fff 0%, transparent 70%);
+        }
+
+        .module-card-body {
+            padding: 14px 16px 16px;
+        }
+
+        .hazard-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.7px;
+            margin-bottom: 5px;
+        }
+
+        .hazard-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .module-card-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+
+        .module-card-desc {
+            font-size: 12.5px;
+            color: #64748B;
+            line-height: 1.55;
+            margin-bottom: 12px;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+
+        .module-progress-bar {
+            height: 5px;
+            border-radius: 999px;
+            background: #F1F5F9;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .module-progress-fill {
+            height: 100%;
+            border-radius: 999px;
+            width: 0%;
+            transition: width 0.8s ease;
+        }
+
+        .module-start-btn {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: none;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: filter 0.15s, transform 0.1s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            font-family: 'Inter', sans-serif;
+        }
+
+        .module-start-btn:hover {
+            filter: brightness(0.9);
+            transform: scale(0.98);
+        }
+
+        /* ──────────────────────────────────────
+           HAZARD COLOUR TOKENS
+        ────────────────────────────────────── */
+        .hz-earthquake {
+            --hz: #3B82F6;
+            --hz-bg: #DBEAFE;
+        }
+
+        .hz-flood {
+            --hz: #06B6D4;
+            --hz-bg: #CFFAFE;
+        }
+
+        .hz-fire {
+            --hz: #F97316;
+            --hz-bg: #FED7AA;
+        }
+
+        .hz-cyclone {
+            --hz: #8B5CF6;
+            --hz-bg: #EDE9FE;
+        }
+
+        .hz-landslide {
+            --hz: #10B981;
+            --hz-bg: #D1FAE5;
+        }
+
+        .hz-heatwave {
+            --hz: #EF4444;
+            --hz-bg: #FEE2E2;
+        }
+
+        [class*="hz-"] .module-card-top {
+            background: var(--hz-bg);
+        }
+
+        [class*="hz-"] .hazard-tag {
+            color: var(--hz);
+        }
+
+        [class*="hz-"] .hazard-dot {
+            background: var(--hz);
+        }
+
+        [class*="hz-"] .module-progress-fill {
+            background: var(--hz);
+        }
+
+        [class*="hz-"] .module-start-btn {
+            background: var(--hz);
+            color: #fff;
+        }
+
+        /* ──────────────────────────────────────
+           BOTTOM PANELS
+        ────────────────────────────────────── */
+        .bottom-grid {
+            display: grid;
+            grid-template-columns: 1fr 320px;
+            gap: 18px;
+        }
+
+        .panel {
+            background: #fff;
+            border-radius: 14px;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.07);
+        }
+
+        .panel-title {
+            font-size: 14.5px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 14px;
+        }
+
+        /* Activity list */
+        .activity-item {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 10px 0;
+            border-bottom: 1px solid #F8FAFC;
+        }
+
+        .activity-item:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .a-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-top: 5px;
+            flex-shrink: 0;
+        }
+
+        .a-text {
+            font-size: 13px;
+            color: #374151;
+            line-height: 1.45;
+            flex: 1;
+        }
+
+        .a-time {
+            font-size: 11px;
+            color: #94A3B8;
+            white-space: nowrap;
+        }
+
+        /* Quick actions */
+        .qa-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 11px 12px;
+            border-radius: 10px;
+            background: #F8FAFC;
+            border: 1.5px solid #E2E8F0;
+            cursor: pointer;
+            text-decoration: none;
+            color: #1E293B;
+            transition: background 0.15s, border-color 0.15s, transform 0.1s;
+            margin-bottom: 9px;
+        }
+
+        .qa-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .qa-item:hover {
+            background: #EFF6FF;
+            border-color: #93C5FD;
+            transform: translateX(2px);
+        }
+
+        .qa-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .qa-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #0F172A;
+        }
+
+        .qa-sub {
+            font-size: 11.5px;
+            color: #64748B;
+            margin-top: 1px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 32px 16px;
+            color: #94A3B8;
+            font-size: 13px;
+        }
+
+        .empty-state-icon {
+            font-size: 36px;
+            margin-bottom: 10px;
+        }
+
+        /* Responsive safeguard */
+        @media (max-width: 900px) {
+            .bottom-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        @media (max-width: 700px) {
+            .sidebar {
+                width: 64px;
+            }
+
+            .sidebar-logo span:last-child,
+            .nav-item span,
+            .nav-section-label,
+            .user-chip-name,
+            .user-chip-role,
+            .logout-btn span {
+                display: none;
+            }
+
+            .nav-item {
+                justify-content: center;
+                padding: 10px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══════════════════════════════════
+     SIDEBAR
+═══════════════════════════════════ -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="logo-shield">🛡️</div>
+            <span>Suraksha</span>
+        </div>
+
+        <nav class="sidebar-nav">
+            <span class="nav-section-label">Main</span>
+
+            <a href="/home" class="nav-item active" id="nav-dashboard">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+                </svg>
+                <span>Dashboard</span>
+            </a>
+
+            <a href="/modules" class="nav-item" id="nav-modules">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
+                </svg>
+                <span>Learning Modules</span>
+            </a>
+
+            <a href="/assessments" class="nav-item" id="nav-assessments">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Quizzes &amp; Assessments</span>
+            </a>
+
+            <a href="/simulations" class="nav-item" id="nav-simulations">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Simulations</span>
+            </a>
+
+            <a href="/drills" class="nav-item" id="nav-drills">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                <span>Virtual Drills</span>
+            </a>
+
+            <a href="/emergency" class="nav-item" id="nav-emergency">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <span>Emergency Plan</span>
+            </a>
+
+            <span class="nav-section-label">Progress</span>
+
+            <a href="/progress" class="nav-item" id="nav-progress">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                </svg>
+                <span>Progress</span>
+            </a>
+
+            <a href="/certificates" class="nav-item" id="nav-certificates">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                </svg>
+                <span>Certificates</span>
+            </a>
+
+            <span class="nav-section-label">Account</span>
+
+            <a href="/profile" class="nav-item" id="nav-profile">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span>Profile</span>
+            </a>
+
+            <a href="/help" class="nav-item" id="nav-help">
+                <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                <span>Help &amp; Support</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-bottom">
+            <form th:action="@{/logout}" method="post">
+                <button type="submit" class="logout-btn" id="logout-btn">
+                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Log out</span>
+                </button>
+            </form>
+        </div>
+    </aside>
+
+    <!-- ═══════════════════════════════════
+     MAIN AREA
+═══════════════════════════════════ -->
+    <div class="main-area">
+
+        <!-- Topbar -->
+        <header class="topbar">
+            <div class="topbar-title">Dashboard</div>
+            <div class="topbar-right">
+                <button class="bell-btn" id="notifications-btn" aria-label="Notifications">
+                    <svg width="17" height="17" fill="none" viewBox="0 0 24 24" stroke="#64748B" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round"
+                            d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                </button>
+                <div class="user-chip" id="user-chip">
+                    <div class="user-avatar" th:text="${initials}">KL</div>
+                    <div>
+                        <div class="user-chip-name" th:text="${fullName}">Khushi Lakhera</div>
+                        <div class="user-chip-role" th:text="${roleLabel}">Student</div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Page content -->
+        <main class="page-content">
+
+            <!-- Welcome banner with progress ring -->
+            <div class="welcome-banner">
+                <div class="welcome-text">
+                    <h1>Welcome back, <span th:text="${fullName}">Name</span>! 👋</h1>
+                    <p>Keep learning, stay prepared, make a safer world.</p>
+                </div>
+                <div class="welcome-progress">
+                    <div class="progress-ring-wrap">
+                        <svg width="82" height="82" viewBox="0 0 82 82">
+                            <circle cx="41" cy="41" r="32" fill="none" stroke="rgba(255,255,255,0.18)"
+                                stroke-width="7" />
+                            <circle id="ringFill" cx="41" cy="41" r="32" fill="none" stroke="#fff" stroke-width="7"
+                                stroke-linecap="round" stroke-dasharray="201.06" stroke-dashoffset="201.06" />
+                        </svg>
+                        <div class="progress-ring-label">
+                            <span class="ring-pct" id="ringPct">0%</span>
+                            <span class="ring-lbl">complete</span>
+                        </div>
+                    </div>
+                    <div class="progress-ring-info">
+                        <div class="ring-title">Your Progress</div>
+                        <div class="ring-sub"
+                            th:text="${modulesCount + (modulesCount == 1 ? ' module available' : ' modules available')}">
+                            0 modules available
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modules grid -->
+            <div class="section-header">
+                <h2>📚 Disaster Preparedness Modules</h2>
+                <a href="/modules">View all →</a>
+            </div>
+
+            <div class="modules-grid" th:if="${not #lists.isEmpty(modules)}">
+                <a th:each="m : ${modules}" th:href="@{/modules/{id}(id=${m.id})}"
+                    th:class="${'module-card hz-' + #strings.toLowerCase(m.hazardCode)}">
+
+                    <!-- Coloured icon top -->
+                    <div class="module-card-top">
+                        <span th:switch="${m.hazardCode}">
+                            <span th:case="'EARTHQUAKE'">🏔️</span>
+                            <span th:case="'FLOOD'">🌊</span>
+                            <span th:case="'FIRE'">🔥</span>
+                            <span th:case="'CYCLONE'">🌀</span>
+                            <span th:case="'LANDSLIDE'">⛰️</span>
+                            <span th:case="'HEATWAVE'">☀️</span>
+                            <span th:case="*">⚠️</span>
+                        </span>
+                    </div>
+
+                    <div class="module-card-body">
+                        <div class="hazard-tag">
+                            <span class="hazard-dot"></span>
+                            <span th:text="${m.hazardName}">Hazard</span>
+                        </div>
+                        <div class="module-card-title" th:text="${m.title}">Module Title</div>
+                        <div class="module-card-desc" th:text="${m.description}">
+                            Description of the module.
+                        </div>
+                        <div class="module-progress-bar">
+                            <div class="module-progress-fill" style="width:0%"></div>
+                        </div>
+                        <button class="module-start-btn" onclick="return false;" type="button">
+                            Start Learning
+                            <svg width="13" height="13" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                                stroke-width="2.5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                            </svg>
+                        </button>
+                    </div>
+                </a>
+            </div>
+
+            <div class="empty-state" th:if="${#lists.isEmpty(modules)}">
+                <div class="empty-state-icon">📭</div>
+                No modules published yet. Check back soon!
+            </div>
+
+            <!-- Recent Activity + Quick Actions -->
+            <div class="bottom-grid">
+
+                <!-- Recent Activity -->
+                <div class="panel">
+                    <div class="panel-title">Recent Activity</div>
+                    <div class="activity-item">
+                        <div class="a-dot" style="background:#10B981;"></div>
+                        <div class="a-text">Welcome to Suraksha! Your journey to disaster preparedness begins now.</div>
+                        <div class="a-time">Today</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="a-dot" style="background:#2563EB;"></div>
+                        <div class="a-text" th:text="${modulesCount + ' module(s) are ready for you to explore.'}">
+                            Modules are ready for you to explore.
+                        </div>
+                        <div class="a-time">Now</div>
+                    </div>
+                    <div class="activity-item">
+                        <div class="a-dot" style="background:#F97316;"></div>
+                        <div class="a-text">Complete modules to unlock quizzes and earn certificates.</div>
+                        <div class="a-time">Tip</div>
+                    </div>
+                </div>
+
+                <!-- Quick Actions -->
+                <div class="panel">
+                    <div class="panel-title">Quick Actions</div>
+
+                    <a href="/modules" class="qa-item" id="qa-modules">
+                        <div class="qa-icon" style="background:#EFF6FF;">📚</div>
+                        <div>
+                            <div class="qa-label">Browse Modules</div>
+                            <div class="qa-sub">Start a learning module</div>
+                        </div>
+                    </a>
+
+                    <a href="/assessments" class="qa-item" id="qa-quiz">
+                        <div class="qa-icon" style="background:#F0FDF4;">✅</div>
+                        <div>
+                            <div class="qa-label">Take a Quiz</div>
+                            <div class="qa-sub">Test your knowledge</div>
+                        </div>
+                    </a>
+
+                    <a href="/simulations" class="qa-item" id="qa-simulation">
+                        <div class="qa-icon" style="background:#FFF7ED;">🎮</div>
+                        <div>
+                            <div class="qa-label">Join a Simulation</div>
+                            <div class="qa-sub">Practice emergency decisions</div>
+                        </div>
+                    </a>
+
+                    <a href="/drills" class="qa-item" id="qa-drills">
+                        <div class="qa-icon" style="background:#FEF3C7;">⚡</div>
+                        <div>
+                            <div class="qa-label">Virtual Drills</div>
+                            <div class="qa-sub">Practice campus evacuation</div>
+                        </div>
+                    </a>
+
+                    <a href="/emergency" class="qa-item" id="qa-emergency">
+                        <div class="qa-icon" style="background:#FEE2E2;">🚨</div>
+                        <div>
+                            <div class="qa-label">Emergency Plan</div>
+                            <div class="qa-sub">Contacts, routes &amp; checklist</div>
+                        </div>
+                    </a>
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // Animate progress ring on load (progress will be driven by real data once tracking is built)
+        (function () {
+            const circumference = 2 * Math.PI * 32; // ~201.06
+            const pct = [[${ overallProgress != null ? overallProgress : 0}]];
+        const ring = document.getElementById('ringFill');
+        const label = document.getElementById('ringPct');
+        if (!ring) return;
+        ring.style.strokeDasharray = circumference;
+        ring.style.strokeDashoffset = circumference;
+        ring.style.transition = 'none';
+        setTimeout(() => {
+            ring.style.transition = 'stroke-dashoffset 1.2s cubic-bezier(0.4,0,0.2,1)';
+            ring.style.strokeDashoffset = circumference * (1 - pct / 100);
+            label.textContent = pct + '%';
+        }, 300);
+    }) ();
+    </script>
+
+</body>
+
+</html>

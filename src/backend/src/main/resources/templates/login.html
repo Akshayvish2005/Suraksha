@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="Sign in to Suraksha — Disaster Preparedness Education System for schools and colleges.">
+    <title>Suraksha — Sign In</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            background: #F1F5F9;
+        }
+
+        /* ── Left panel ─────────────────────── */
+        .left-panel {
+            flex: 1;
+            background: linear-gradient(150deg, #0F2460 0%, #1E3A8A 45%, #1D4ED8 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 48px 52px;
+            position: relative;
+            overflow: hidden;
+            min-height: 100vh;
+        }
+
+        .left-panel::before {
+            content: '';
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            top: -180px;
+            left: -140px;
+            pointer-events: none;
+        }
+
+        .left-panel::after {
+            content: '';
+            position: absolute;
+            width: 340px;
+            height: 340px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.04);
+            bottom: -100px;
+            right: -80px;
+            pointer-events: none;
+        }
+
+        .brand-logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 48px;
+            z-index: 1;
+        }
+
+        .brand-shield {
+            width: 44px;
+            height: 44px;
+            background: rgba(255, 255, 255, 0.15);
+            border: 1.5px solid rgba(255, 255, 255, 0.3);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+        }
+
+        .brand-name {
+            font-size: 26px;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: -0.5px;
+        }
+
+        .hero-headline {
+            z-index: 1;
+            margin-bottom: 40px;
+            text-align: center;
+        }
+
+        .hero-headline h1 {
+            font-size: 36px;
+            font-weight: 700;
+            color: #fff;
+            line-height: 1.2;
+            letter-spacing: -0.5px;
+            margin-bottom: 16px;
+        }
+
+        .hero-headline h1 .accent {
+            color: #93C5FD;
+        }
+
+        .hero-headline p {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.68);
+            line-height: 1.6;
+            max-width: 360px;
+            margin: 0 auto;
+        }
+
+        .hazard-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 14px;
+            z-index: 1;
+            width: 100%;
+            max-width: 380px;
+            margin-bottom: 40px;
+        }
+
+        .hazard-chip {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 16px 10px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.2s, transform 0.2s;
+            animation: floatIn 0.6s ease both;
+        }
+
+        .hazard-chip:hover {
+            background: rgba(255, 255, 255, 0.14);
+            transform: translateY(-3px);
+        }
+
+        .hazard-chip:nth-child(1) {
+            animation-delay: 0.1s;
+        }
+
+        .hazard-chip:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .hazard-chip:nth-child(3) {
+            animation-delay: 0.3s;
+        }
+
+        @keyframes floatIn {
+            from {
+                opacity: 0;
+                transform: translateY(14px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hazard-chip-icon {
+            font-size: 28px;
+        }
+
+        .hazard-chip-name {
+            font-size: 11px;
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.8);
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+        }
+
+        .left-tagline {
+            z-index: 1;
+            text-align: center;
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.45);
+        }
+
+        /* ── Right panel (form) ─────────────── */
+        .right-panel {
+            width: 460px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 48px;
+            background: #fff;
+            min-height: 100vh;
+        }
+
+        .form-box {
+            width: 100%;
+            max-width: 360px;
+        }
+
+        .form-header {
+            margin-bottom: 32px;
+        }
+
+        .form-header h2 {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 6px;
+        }
+
+        .form-header p {
+            font-size: 14px;
+            color: #64748B;
+            line-height: 1.5;
+        }
+
+        .alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            border-radius: 10px;
+            font-size: 13.5px;
+            margin-bottom: 20px;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-6px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .alert-error {
+            background: #FEF2F2;
+            color: #B91C1C;
+            border: 1px solid #FECACA;
+        }
+
+        .alert-success {
+            background: #F0FDF4;
+            color: #166534;
+            border: 1px solid #BBF7D0;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #374151;
+            margin-bottom: 6px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 11px 14px;
+            border: 1.5px solid #E2E8F0;
+            border-radius: 10px;
+            font-size: 14px;
+            font-family: 'Inter', sans-serif;
+            color: #0F172A;
+            background: #F8FAFC;
+            transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+            outline: none;
+        }
+
+        .field input:focus {
+            border-color: #2563EB;
+            background: #fff;
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+        }
+
+        .field input::placeholder {
+            color: #94A3B8;
+        }
+
+        .pwd-wrap {
+            position: relative;
+        }
+
+        .pwd-wrap input {
+            padding-right: 44px;
+        }
+
+        .pwd-toggle {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 4px;
+            color: #94A3B8;
+            transition: color 0.15s;
+            display: flex;
+            align-items: center;
+        }
+
+        .pwd-toggle:hover {
+            color: #2563EB;
+        }
+
+        .eye-off {
+            display: none;
+        }
+
+        .submit-btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: linear-gradient(135deg, #2563EB, #1D4ED8);
+            color: #fff;
+            font-size: 15px;
+            font-weight: 600;
+            font-family: 'Inter', sans-serif;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: filter 0.15s, transform 0.1s, box-shadow 0.15s;
+            box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+            margin-top: 8px;
+        }
+
+        .submit-btn:hover {
+            filter: brightness(1.08);
+            transform: translateY(-1px);
+            box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+        }
+
+        .submit-btn:active {
+            transform: scale(0.98);
+        }
+
+        .divider {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 20px 0;
+        }
+
+        .divider::before,
+        .divider::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: #E2E8F0;
+        }
+
+        .divider span {
+            font-size: 12px;
+            color: #94A3B8;
+            white-space: nowrap;
+        }
+
+        .form-footer {
+            margin-top: 24px;
+            text-align: center;
+            font-size: 13px;
+            color: #94A3B8;
+        }
+
+        .form-footer strong {
+            color: #0F172A;
+        }
+
+        @media (max-width: 768px) {
+            .left-panel {
+                display: none;
+            }
+
+            .right-panel {
+                width: 100%;
+                padding: 40px 28px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Left panel -->
+    <div class="left-panel">
+        <div class="brand-logo">
+            <div class="brand-shield">&#128737;</div>
+            <span class="brand-name">Suraksha</span>
+        </div>
+        <div class="hero-headline">
+            <h1>Be <span class="accent">Aware.</span><br>Be <span class="accent">Prepared.</span><br>Be <span
+                    class="accent">Safer.</span></h1>
+            <p>Disaster preparedness education for schools and colleges. Learn, practise, and stay ready.</p>
+        </div>
+        <div class="hazard-grid">
+            <div class="hazard-chip">
+                <span class="hazard-chip-icon">&#127956;</span>
+                <span class="hazard-chip-name">Earthquake</span>
+            </div>
+            <div class="hazard-chip">
+                <span class="hazard-chip-icon">&#127754;</span>
+                <span class="hazard-chip-name">Flood</span>
+            </div>
+            <div class="hazard-chip">
+                <span class="hazard-chip-icon">&#128293;</span>
+                <span class="hazard-chip-name">Fire</span>
+            </div>
+        </div>
+        <p class="left-tagline">A Safer Campus &middot; A Stronger Tomorrow</p>
+    </div>
+
+    <!-- Right panel -->
+    <div class="right-panel">
+        <div class="form-box">
+            <div class="form-header">
+                <h2>Welcome back &#128075;</h2>
+                <p>Sign in to your Suraksha account to continue learning.</p>
+            </div>
+
+            <div class="alert alert-error" th:if="${param.error}" role="alert">
+                &#10060; Incorrect username or password. Please try again.
+            </div>
+            <div class="alert alert-success" th:if="${param.logout}" role="alert">
+                &#10003; You have been signed out successfully.
+            </div>
+
+            <form th:action="@{/login}" method="post" id="login-form">
+                <div class="field">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" placeholder="Enter your username" required
+                        autofocus autocomplete="username">
+                </div>
+                <div class="field">
+                    <label for="password">Password</label>
+                    <div class="pwd-wrap">
+                        <input type="password" id="password" name="password" placeholder="Enter your password" required
+                            autocomplete="current-password">
+                        <button type="button" class="pwd-toggle" id="pwd-toggle-btn" aria-label="Show or hide password"
+                            onclick="togglePassword()">
+                            <!-- Eye open -->
+                            <svg id="eye-on" class="eye-on" width="18" height="18" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                            <!-- Eye off -->
+                            <svg id="eye-off" class="eye-off" width="18" height="18" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round"
+                                    d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <button type="submit" class="submit-btn" id="signin-btn">
+                    Sign In
+                    <svg width="16" height="16" fill="none" viewBox="0 0 24 24" stroke="currentColor"
+                        stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                    </svg>
+                </button>
+            </form>
+
+            <div class="divider"><span>Need help?</span></div>
+            <div class="form-footer">
+                Contact your institution admin to get your login credentials, or write to
+                <strong>support@suraksha.edu</strong>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function togglePassword() {
+            var input = document.getElementById('password');
+            var eyeOn = document.getElementById('eye-on');
+            var eyeOff = document.getElementById('eye-off');
+            if (input.type === 'password') {
+                input.type = 'text';
+                eyeOn.style.display = 'none';
+                eyeOff.style.display = 'block';
+            } else {
+                input.type = 'password';
+                eyeOn.style.display = 'block';
+                eyeOff.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+
+</html>

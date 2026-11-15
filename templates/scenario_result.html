@@ -1,0 +1,1 @@
+{% extends "base.html" %}{% block title %}Simulation Result · Suraksha{% endblock %}{% block content %}<div class="result panel"><div class="result-icon">⚡</div><h1>Simulation complete</h1><div class="score">{{ percent }}%</div><p>Score: {{ score }} / {{ max_score }}</p><a class="button" href="{{ url_for('simulations') }}">Try another scenario</a></div>{% endblock %}

@@ -1,0 +1,7 @@
+{% extends "base.html" %}{% block title %}Dashboard · Suraksha{% endblock %}{% block page_heading %}Dashboard{% endblock %}
+{% block content %}
+<div class="welcome"><div><span class="eyebrow light">YOUR SAFETY JOURNEY</span><h1>Welcome, {{ g.user.full_name }}!</h1><p>Build the knowledge and confidence to respond safely in an emergency.</p></div><div class="ring"><strong>{{ ((completed / total * 100)|round|int) if total else 0 }}%</strong><small>modules</small></div></div>
+<div class="stats"><div class="stat"><span>Published modules</span><strong>{{ total }}</strong></div><div class="stat"><span>Completed modules</span><strong>{{ completed }}</strong></div><div class="stat"><span>Your role</span><strong class="role">{{ g.user.role|replace('_',' ')|title }}</strong></div></div>
+<div class="section-title"><div><h2>Learning modules</h2><p>Choose a hazard and start learning.</p></div></div>
+<div class="cards">{% for m in modules %}<article class="card"><div class="hazard-icon">{% if m.hazard_name|lower == 'fire' %}🔥{% elif m.hazard_name|lower == 'flood' %}🌊{% else %}🌎{% endif %}</div><span class="tag">{{ m.hazard_name }}</span><h3>{{ m.title or 'Learning module' }}</h3><p>{{ m.description or 'Learn what to do before, during and after an emergency.' }}</p><a class="text-link" href="{{ url_for('module_detail',module_id=m.id) }}">Explore module →</a></article>{% else %}<div class="empty">No published learning modules are available yet. Ask your administrator to publish learning content.</div>{% endfor %}</div>
+{% endblock %}

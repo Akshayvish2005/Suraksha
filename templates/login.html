@@ -1,0 +1,13 @@
+{% extends "base.html" %}{% block title %}Suraksha — Sign In{% endblock %}
+{% block content %}
+<div class="login-layout">
+ <section class="login-hero"><div class="hero-brand"><span class="shield">🛡</span> SURAKSHA</div>
+ <div><h1>Be prepared.<br><span>Stay safe.</span></h1><p>Learn essential disaster preparedness skills through interactive lessons, assessments and virtual drills.</p>
+ <div class="hazards"><div>🌎<b>EARTHQUAKE</b></div><div>🌊<b>FLOOD</b></div><div>🔥<b>FIRE</b></div></div></div>
+ <small>Disaster Preparedness Education System</small></section>
+ <section class="login-panel"><form method="post" class="login-card"><div class="eyebrow">WELCOME BACK</div><h2>Sign in to Suraksha</h2><p class="muted">Enter your account details to continue.</p>
+ <label>Username<input name="username" autocomplete="username" required placeholder="Enter your username"></label>
+ <label>Password<input name="password" type="password" autocomplete="current-password" required placeholder="Enter your password"></label>
+ <button class="primary full">Sign in securely →</button><p class="tiny">Use the account created by your institution administrator.</p></form></section>
+</div>
+{% endblock %}

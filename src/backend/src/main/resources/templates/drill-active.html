@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha — Live Virtual Drill Exercise Simulation.">
+    <title>Suraksha — Active Drill Session</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0F172A;
+            color: #F8FAFC;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .drill-top-strip {
+            background: #DC2626;
+            color: #fff;
+            padding: 12px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-weight: 700;
+            box-shadow: 0 2px 10px rgba(220, 38, 38, 0.4);
+            animation: warningPulse 2s infinite;
+        }
+
+        @keyframes warningPulse {
+            0% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.88;
+            }
+
+            100% {
+                opacity: 1;
+            }
+        }
+
+        .drill-container {
+            max-width: 900px;
+            margin: 36px auto;
+            padding: 0 20px;
+            width: 100%;
+            flex: 1;
+        }
+
+        .drill-card {
+            background: #1E293B;
+            border: 1px solid #334155;
+            border-radius: 20px;
+            padding: 32px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            margin-bottom: 24px;
+        }
+
+        .timer-display-box {
+            background: #0F172A;
+            border: 2px solid #EF4444;
+            border-radius: 16px;
+            padding: 20px;
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .timer-val {
+            font-size: 48px;
+            font-weight: 800;
+            color: #EF4444;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: 2px;
+        }
+
+        .timer-label {
+            font-size: 13px;
+            color: #94A3B8;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .role-banner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #0F172A;
+            border: 1px solid #334155;
+            border-radius: 12px;
+            padding: 14px 20px;
+            margin-bottom: 24px;
+        }
+
+        .role-title {
+            font-size: 14px;
+            color: #94A3B8;
+        }
+
+        .role-val {
+            font-size: 15px;
+            font-weight: 700;
+            color: #38BDF8;
+        }
+
+        .instruction-box {
+            background: #1E3A8A;
+            border-left: 4px solid #3B82F6;
+            border-radius: 8px;
+            padding: 16px 20px;
+            margin-bottom: 28px;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
+        .step-heading {
+            font-size: 17px;
+            font-weight: 700;
+            color: #F8FAFC;
+            margin-bottom: 14px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .route-option {
+            background: #0F172A;
+            border: 2px solid #334155;
+            border-radius: 14px;
+            padding: 18px 20px;
+            margin-bottom: 14px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+        }
+
+        .route-option:hover {
+            border-color: #38BDF8;
+            background: #162032;
+        }
+
+        .route-option.selected {
+            border-color: #10B981;
+            background: #064E3B;
+        }
+
+        .route-radio {
+            margin-top: 4px;
+            accent-color: #10B981;
+            width: 18px;
+            height: 18px;
+        }
+
+        .route-name {
+            font-size: 15px;
+            font-weight: 700;
+            color: #F8FAFC;
+            margin-bottom: 4px;
+        }
+
+        .route-desc {
+            font-size: 13px;
+            color: #94A3B8;
+            line-height: 1.4;
+        }
+
+        .route-assembly {
+            font-size: 12.5px;
+            color: #34D399;
+            margin-top: 6px;
+            font-weight: 600;
+        }
+
+        .submit-btn-row {
+            margin-top: 32px;
+            display: flex;
+            justify-content: flex-end;
+        }
+
+        .btn-finish-drill {
+            background: #10B981;
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            box-shadow: 0 4px 14px rgba(16, 185, 129, 0.4);
+            transition: background 0.15s;
+        }
+
+        .btn-finish-drill:hover {
+            background: #059669;
+        }
+
+        .siren-toggle-btn {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="drill-top-strip">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span>&#128680; VIRTUAL DRILL IN PROGRESS:</span>
+            <span th:text="${drill.title}">Earthquake Evacuation Drill</span>
+        </div>
+        <div>
+            <button type="button" class="siren-toggle-btn" id="sirenBtn" onclick="toggleSiren()">
+                &#128266; Toggle Siren Audio
+            </button>
+        </div>
+    </div>
+
+    <div class="drill-container">
+        <div class="drill-card">
+            <!-- Live Stopwatch -->
+            <div class="timer-display-box">
+                <div class="timer-val" id="stopwatch">00:00</div>
+                <div class="timer-label">Evacuation Response Elapsed Time</div>
+            </div>
+
+            <!-- Role banner -->
+            <div class="role-banner">
+                <div>
+                    <div class="role-title">Assigned Drill Responsibility:</div>
+                    <div class="role-val" th:text="${participant.drillRole}">STUDENT</div>
+                </div>
+                <div>
+                    <div class="role-title">Participant:</div>
+                    <div class="role-val" style="color:#fff;" th:text="${fullName}">Khushi Lakhera</div>
+                </div>
+            </div>
+
+            <div class="instruction-box">
+                <strong>Emergency Drill Protocol:</strong> The alarm has been activated. In an actual event, do not run,
+                push, or use lifts. Choose your designated evacuation corridor to reach the safe assembly point and
+                record your safe arrival.
+            </div>
+
+            <!-- Evacuation Route Chooser -->
+            <form th:action="@{/drills/{id}/complete(id=${drill.id})}" method="post" id="drillForm">
+                <input type="hidden" name="evacuationTimeSeconds" id="evacTimeSec" value="60">
+
+                <div class="step-heading">
+                    <span>&#128506;&#65039; Step 1: Select Your Evacuation Route &amp; Assembly Zone</span>
+                </div>
+
+                <div th:each="r, iterStat : ${routes}">
+                    <label th:class="${'route-option ' + (iterStat.index == 0 ? 'selected' : '')}"
+                        th:for="${'route_' + r.id}" onclick="selectRoute(this)">
+                        <input type="radio" name="evacuationRouteId" th:id="${'route_' + r.id}" th:value="${r.id}"
+                            class="route-radio" th:checked="${iterStat.index == 0}">
+                        <div>
+                            <div class="route-name" th:text="${r.name}">North Stairwell & Main Field</div>
+                            <div class="route-desc" th:text="${r.description}">Desc</div>
+                            <div class="route-assembly">&#127988; Destination: <span th:text="${r.assemblyPoint}">Zone
+                                    A</span></div>
+                        </div>
+                    </label>
+                </div>
+
+                <div class="step-heading" style="margin-top: 28px;">
+                    <span>&#128161; Step 2: Confirm Emergency Check-In at Assembly Point</span>
+                </div>
+                <p style="font-size: 13.5px; color: #94A3B8; margin-bottom: 20px;">
+                    Once you click "Record Safe Evacuation", your evacuation time and route choice will be reported to
+                    the institution's drill safety dashboard for roll-call verification.
+                </p>
+
+                <div class="submit-btn-row">
+                    <button type="submit" class="btn-finish-drill">
+                        &#10003; Record Safe Evacuation &amp; Finish Drill
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Live Evacuation Stopwatch
+        let elapsedSeconds = 0;
+        const stopwatchEl = document.getElementById('stopwatch');
+        const evacInput = document.getElementById('evacTimeSec');
+
+        const timerInterval = setInterval(() => {
+            elapsedSeconds++;
+            const mins = Math.floor(elapsedSeconds / 60);
+            const secs = elapsedSeconds % 60;
+            stopwatchEl.textContent =
+                (mins < 10 ? '0' : '') + mins + ':' + (secs < 10 ? '0' : '') + secs;
+            evacInput.value = elapsedSeconds;
+        }, 1000);
+
+        function selectRoute(element) {
+            document.querySelectorAll('.route-option').forEach(el => el.classList.remove('selected'));
+            element.classList.add('selected');
+            const radio = element.querySelector('input[type="radio"]');
+            if (radio) radio.checked = true;
+        }
+
+        // Audio synthesizer for emergency alarm simulation (no external audio file required)
+        let audioCtx = null;
+        let osc = null;
+        let sirenActive = false;
+
+        function toggleSiren() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (sirenActive) {
+                if (osc) { osc.stop(); osc.disconnect(); osc = null; }
+                sirenActive = false;
+                document.getElementById('sirenBtn').textContent = '🔊 Toggle Siren Audio';
+            } else {
+                osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+                osc.frequency.linearRampToValueAtTime(900, audioCtx.currentTime + 0.6);
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                sirenActive = true;
+                document.getElementById('sirenBtn').textContent = '🔇 Stop Siren Audio';
+            }
+        }
+    </script>
+
+</body>
+
+</html>

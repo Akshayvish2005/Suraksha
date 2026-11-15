@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Suraksha — Virtual Drill Debrief and Performance Analytics Report.">
+    <title>Suraksha — Drill After-Action Report</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            color: #1E293B;
+            min-height: 100vh;
+        }
+
+        .top-navbar {
+            background: #1E3A8A;
+            color: #fff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .back-link {
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            font-size: 13.5px;
+            font-weight: 500;
+        }
+
+        .back-link:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .report-wrapper {
+            max-width: 1100px;
+            margin: 32px auto;
+            padding: 0 24px;
+        }
+
+        .report-header-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            margin-bottom: 24px;
+        }
+
+        .report-tag {
+            display: inline-block;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            background: #EFF6FF;
+            color: #2563EB;
+        }
+
+        .report-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #0F172A;
+            margin-bottom: 6px;
+        }
+
+        .report-desc {
+            font-size: 14px;
+            color: #64748B;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        @media (max-width: 800px) {
+            .metrics-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .metric-card {
+            background: #fff;
+            border-radius: 14px;
+            border: 1px solid #E2E8F0;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+        }
+
+        .metric-label {
+            font-size: 12px;
+            color: #64748B;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-bottom: 6px;
+        }
+
+        .metric-val {
+            font-size: 26px;
+            font-weight: 800;
+            color: #0F172A;
+        }
+
+        .table-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            overflow: hidden;
+            margin-bottom: 28px;
+        }
+
+        .table-card-header {
+            padding: 18px 24px;
+            border-bottom: 1px solid #F1F5F9;
+            font-size: 16px;
+            font-weight: 700;
+            color: #0F172A;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 13.5px;
+        }
+
+        th {
+            background: #F8FAFC;
+            padding: 12px 20px;
+            font-size: 11.5px;
+            font-weight: 600;
+            color: #64748B;
+            text-transform: uppercase;
+            border-bottom: 1px solid #E2E8F0;
+        }
+
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #F1F5F9;
+            color: #334155;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .status-completed {
+            background: #DCFCE7;
+            color: #15803D;
+        }
+
+        .status-joined {
+            background: #FEF3C7;
+            color: #B45309;
+        }
+
+        .status-assigned {
+            background: #F1F5F9;
+            color: #64748B;
+        }
+
+        .role-chip {
+            display: inline-block;
+            padding: 2px 7px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+            background: #EFF6FF;
+            color: #1D4ED8;
+        }
+
+        .print-btn-bar {
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .btn-print {
+            background: #fff;
+            border: 1px solid #CBD5E1;
+            color: #0F172A;
+            padding: 8px 18px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .btn-print:hover {
+            background: #F8FAFC;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-navbar">
+        <a href="/home" class="nav-brand">&#128737;&#65039; Suraksha Education System</a>
+        <a href="/drills" class="back-link">&larr; Back to Virtual Drills</a>
+    </nav>
+
+    <div class="report-wrapper">
+        <div class="print-btn-bar">
+            <button type="button" class="btn-print" onclick="window.print()">&#128438;&#65039; Print After-Action
+                Report</button>
+            <a href="/drills" class="btn-print" style="text-decoration:none;">&larr; Done</a>
+        </div>
+
+        <!-- Header card -->
+        <div class="report-header-card">
+            <span class="report-tag" th:text="${drill.hazardName}">Earthquake</span>
+            <h1 class="report-title" th:text="${drill.title + ' — After-Action Report'}">Earthquake Drill Report</h1>
+            <p class="report-desc">
+                Official institutional drill evaluation conducted under the Suraksha School Disaster Safety Framework
+                (FR-VD-05).
+            </p>
+        </div>
+
+        <!-- 4 key metrics -->
+        <div class="metrics-grid">
+            <div class="metric-card">
+                <div class="metric-label">Participation Rate</div>
+                <div class="metric-val" style="color: #2563EB;" th:text="${participationPct + '%'}">75%</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Participants Completed</div>
+                <div class="metric-val" th:text="${completedCount + ' / ' + totalCount}">3 / 4</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Avg. Evacuation Speed</div>
+                <div class="metric-val" style="color: #059669;" th:text="${avgEvacTime + 's'}">114s</div>
+            </div>
+            <div class="metric-card">
+                <div class="metric-label">Compliance Status</div>
+                <div class="metric-val" style="color: #10B981;">SATISFACTORY</div>
+            </div>
+        </div>
+
+        <!-- Participant Roll-call Breakdown Table -->
+        <div class="table-card">
+            <div class="table-card-header">
+                Participant Accountability &amp; Evacuation Route Log
+            </div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Participant</th>
+                        <th>Drill Role</th>
+                        <th>Evacuation Status</th>
+                        <th>Evacuation Route Used</th>
+                        <th>Destination Assembly Point</th>
+                        <th>Response Time</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr th:each="p : ${participants}">
+                        <td>
+                            <strong th:text="${p.fullName}">Khushi Lakhera</strong>
+                            <div style="font-size:11px; color:#64748B;" th:text="${p.username}">student1</div>
+                        </td>
+                        <td><span class="role-chip" th:text="${p.drillRole}">STUDENT</span></td>
+                        <td>
+                            <span
+                                th:class="${'status-badge ' + (p.status == 'COMPLETED' ? 'status-completed' : (p.status == 'JOINED' ? 'status-joined' : 'status-assigned'))}"
+                                th:text="${p.status}">COMPLETED</span>
+                        </td>
+                        <td th:text="${p.evacuationRouteName != null ? p.evacuationRouteName : 'Standard Corridor'}">
+                            North Stairwell</td>
+                        <td th:text="${p.assemblyPoint != null ? p.assemblyPoint : 'Main Football Field'}">Zone A</td>
+                        <td th:text="${p.evacuationTimeSeconds != null ? p.evacuationTimeSeconds + ' sec' : '—'}">114
+                            sec</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+</body>
+
+</html>

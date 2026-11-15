@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suraksha — Schedule Emergency Drill</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #F1F5F9;
+            color: #1E293B;
+            min-height: 100vh;
+        }
+
+        .top-navbar {
+            background: #1E3A8A;
+            color: #fff;
+            padding: 14px 28px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .nav-brand {
+            font-size: 18px;
+            font-weight: 700;
+            color: #fff;
+            text-decoration: none;
+        }
+
+        .form-wrap {
+            max-width: 650px;
+            margin: 40px auto;
+            padding: 0 20px;
+        }
+
+        .form-card {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #E2E8F0;
+            padding: 32px;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.04);
+        }
+
+        h1 {
+            font-size: 22px;
+            font-weight: 700;
+            color: #0F172A;
+            margin-bottom: 6px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 6px;
+        }
+
+        input[type="text"],
+        input[type="datetime-local"],
+        select {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .btn-submit {
+            background: #2563EB;
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+    </style>
+</head>
+
+<body>
+
+    <nav class="top-navbar">
+        <a href="/home" class="nav-brand">&#128737;&#65039; Suraksha Education System</a>
+        <a href="/drills" style="color:#fff; text-decoration:none; font-size:13.5px;">&larr; Cancel</a>
+    </nav>
+
+    <div class="form-wrap">
+        <div class="form-card">
+            <h1>Schedule Virtual Emergency Drill</h1>
+            <p style="font-size: 13.5px; color:#64748B; margin-bottom: 24px;">
+                Set up an institution-wide emergency exercise (FR-VD-01).
+            </p>
+
+            <form th:action="@{/drills/new}" method="post">
+                <div class="form-group">
+                    <label for="title">Drill Title</label>
+                    <input type="text" id="title" name="title" placeholder="e.g. Q4 Campus Earthquake Evacuation Drill"
+                        required>
+                </div>
+
+                <div class="form-group">
+                    <label for="hazardId">Hazard Category</label>
+                    <select id="hazardId" name="hazardId" required>
+                        <option th:each="h : ${hazards}" th:value="${h.id}" th:text="${h.nameEn}">Earthquake</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label for="scenarioId">Linked Crisis Simulation</label>
+                    <select id="scenarioId" name="scenarioId" required>
+                        <option th:each="s : ${scenarios}" th:value="${s.id}" th:text="${s.title}">Classroom Crisis
+                        </option>
+                    </select>
+                </div>
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <div class="form-group">
+                        <label for="startTime">Start Window</label>
+                        <input type="datetime-local" id="startTime" name="startTime" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="endTime">End Window</label>
+                        <input type="datetime-local" id="endTime" name="endTime" required>
+                    </div>
+                </div>
+
+                <div style="margin-top: 24px; display:flex; justify-content: flex-end; gap: 12px;">
+                    <a href="/drills"
+                        style="padding: 10px 18px; color:#64748B; text-decoration:none; font-size:14px;">Cancel</a>
+                    <button type="submit" class="btn-submit">Publish Drill &rarr;</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Default start time to now, end time to 48 hours later
+        const now = new Date();
+        const future = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+        const toIsoLocal = (d) => new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+        document.getElementById('startTime').value = toIsoLocal(now);
+        document.getElementById('endTime').value = toIsoLocal(future);
+    </script>
+
+</body>
+
+</html>
