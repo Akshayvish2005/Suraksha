@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block title %}Drill details · Suraksha{% endblock %}
+{% block content %}
+<div class="page-intro"><h1>{{ drill.title }}</h1><p>Virtual preparedness drill · {{ drill.status }}</p></div>
+<div class="panel">
+  <div class="list-row"><b>Scheduled start</b><span>{{ drill.start_time }}</span></div>
+  <div class="list-row"><b>Scheduled end</b><span>{{ drill.end_time }}</span></div>
+  <div class="list-row"><b>Participation</b><span>{{ participant.status if participant else 'Not assigned' }}</span></div>
+  {% if participant and participant.status != 'COMPLETED' %}
+  <form method="post" action="{{ url_for('join_drill', drill_id=drill.id) }}"><button class="primary">Join drill</button></form>
+  <form method="post" action="{{ url_for('complete_drill', drill_id=drill.id) }}" class="form-grid">
+    <label>Evacuation route
+      <select name="evacuation_route_id"><option value="">Not recorded</option>{% for route in routes|default([]) %}<option value="{{ route.id }}">{{ route.name }}</option>{% endfor %}</select>
+    </label>
+    <label>Evacuation time (seconds)<input type="number" min="0" max="86400" name="evacuation_time_seconds" value="120"></label>
+    <button class="primary">Mark drill completed</button>
+  </form>
+  {% elif not participant and drill.campus_wide %}
+  <form method="post" action="{{ url_for('join_drill', drill_id=drill.id) }}"><button class="primary">Join campus-wide drill</button></form>
+  {% endif %}
+  {% if g.user.role in ['TEACHER','INSTITUTION_ADMIN','SYSTEM_ADMIN'] %}<a class="button" href="{{ url_for('drill_report', drill_id=drill.id) }}">View participation report</a>{% endif %}
+</div>
+{% endblock %}
