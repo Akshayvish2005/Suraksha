@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Drill report · Suraksha{% endblock %}
+{% block content %}
+<div class="page-intro"><h1>{{ drill.title }} — Report</h1><p>Participation and evacuation summary.</p></div>
+<div class="stats-grid">
+  <div class="panel"><small>Assigned participants</small><h2>{{ total }}</h2></div>
+  <div class="panel"><small>Completed</small><h2>{{ completed }}</h2></div>
+  <div class="panel"><small>Completion rate</small><h2>{{ participation_pct }}%</h2></div>
+  <div class="panel"><small>Average evacuation time</small><h2>{{ average_evacuation_seconds }} sec</h2></div>
+</div>
+<div class="panel">
+  <h2>Participant details</h2>
+  {% for p in participants %}
+  <div class="list-row"><span><b>{{ p.full_name }}</b><small>{{ p.username }} · {{ p.status }}</small></span><span>{{ p.route_name or 'Route not recorded' }} · {{ p.evacuation_time_seconds or '—' }} sec</span></div>
+  {% else %}<p class="muted">No participants have been assigned.</p>{% endfor %}
+</div>
+{% endblock %}
