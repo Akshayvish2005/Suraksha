@@ -1,4 +1,5 @@
 import json, csv, io
+from urllib.parse import urlparse
 from datetime import datetime, date
 from flask import render_template, request, redirect, url_for, session, flash, jsonify, abort, Response, g
 from sqlalchemy import select, and_, func
@@ -23,7 +24,11 @@ def register_routes(app):
                 session["user_id"] = user["id"]
                 change("app_user", t.c.id == user["id"], last_login_at=datetime.now())
                 db.session.commit()
-                return redirect(request.args.get("next") or url_for("dashboard"))
+                next_url = request.args.get("next", "")
+                parsed_next = urlparse(next_url)
+                if parsed_next.scheme or parsed_next.netloc or not next_url.startswith("/"):
+                    next_url = url_for("dashboard")
+                return redirect(next_url or url_for("dashboard"))
             flash("Invalid username or password.", "error")
         return render_template("login.html")
 
@@ -181,32 +186,74 @@ def register_routes(app):
         if attempt_type not in ("PRE", "POST"): abort(404)
         uid = session["user_id"]
         if request.method == "POST":
-            aid = int(request.form["attempt_id"])
-            attempt = one("assessment_attempt", and_(table("assessment_attempt").c.id == aid,
-                         table("assessment_attempt").c.user_id == uid))
-            if not attempt or attempt["status"] != "IN_PROGRESS": abort(404)
-            qids = request.form.getlist("question_id")
+            try:
+                aid = int(request.form.get("attempt_id", ""))
+            except (TypeError, ValueError):
+                abort(400)
+            at = table("assessment_attempt")
+            attempt = one("assessment_attempt", and_(
+                at.c.id == aid, at.c.user_id == uid, at.c.module_id == module_id,
+                at.c.attempt_type == attempt_type
+            ))
+            if not attempt or attempt["status"] != "IN_PROGRESS":
+                abort(404)
+
+            q = table("question")
+            ao = table("answer_option")
+            raw_qids = request.form.getlist("question_id")
+            try:
+                qids = [int(value) for value in raw_qids]
+            except (TypeError, ValueError):
+                abort(400)
+            if not qids or len(qids) != len(set(qids)):
+                abort(400)
+
+            valid_questions = rows("question", and_(
+                q.c.id.in_(qids), q.c.module_id == module_id,
+                q.c.status == "PUBLISHED", q.c.purpose.in_([attempt_type, "BOTH"])
+            ))
+            if len(valid_questions) != len(qids):
+                abort(400)
+
             correct_count = 0
             for qid in qids:
-                selected_ids = request.form.getlist(f"answer_{qid}")
-                if not selected_ids: continue
-                correct_options = rows("answer_option", and_(table("answer_option").c.question_id == int(qid),
-                                                               table("answer_option").c.is_correct == True))
-                correct_set = {str(o["id"]) for o in correct_options}
-                is_correct = set(selected_ids) == correct_set
+                selected_raw = request.form.getlist(f"answer_{qid}")
+                try:
+                    selected_ids = {int(value) for value in selected_raw}
+                except (TypeError, ValueError):
+                    abort(400)
+                if not selected_ids:
+                    abort(400)
+
+                valid_options = rows("answer_option", and_(
+                    ao.c.question_id == qid, ao.c.id.in_(selected_ids)
+                ))
+                if len(valid_options) != len(selected_ids):
+                    abort(400)
+
+                correct_options = rows("answer_option", and_(
+                    ao.c.question_id == qid, ao.c.is_correct == True
+                ))
+                correct_set = {int(option["id"]) for option in correct_options}
+                is_correct = selected_ids == correct_set
                 correct_count += int(is_correct)
-                aaid = add("attempt_answer", attempt_id=aid, question_id=int(qid), is_correct=is_correct)
-                for oid in selected_ids:
-                    opt = one("answer_option", and_(table("answer_option").c.id == int(oid),
-                                                    table("answer_option").c.question_id == int(qid)))
-                    if opt: add("attempt_answer_option", attempt_answer_id=aaid, option_id=int(oid))
+                answer_id = add(
+                    "attempt_answer", attempt_id=aid,
+                    question_id=qid, is_correct=is_correct
+                )
+                for option_id in selected_ids:
+                    add("attempt_answer_option", attempt_answer_id=answer_id, option_id=option_id)
+
             total = len(qids)
-            pct = round(100 * correct_count / total, 2) if total else 0
-            change("assessment_attempt", table("assessment_attempt").c.id == aid,
+            pct = round(100 * correct_count / total, 2)
+            change("assessment_attempt", at.c.id == aid,
                    status="SUBMITTED", total_questions=total, correct_count=correct_count,
                    score_percent=pct, submitted_at=datetime.now())
             db.session.commit()
-            return render_template("assessment_result.html", score=pct, correct=correct_count, total=total)
+            return render_template(
+                "assessment_result.html", score=pct,
+                correct=correct_count, total=total
+            )
         aid = add("assessment_attempt", user_id=uid, module_id=module_id, attempt_type=attempt_type,
                   status="IN_PROGRESS", started_at=datetime.now())
         db.session.commit()
@@ -247,21 +294,67 @@ def register_routes(app):
             attempt_id = int(request.form["attempt_id"])
             step_id = request.form.get("step_id")
             option_id = request.form.get("option_id")
-            attempt = one("scenario_attempt", and_(table("scenario_attempt").c.id == attempt_id,
-                           table("scenario_attempt").c.user_id == session["user_id"]))
-            if not attempt: abort(404)
-            step = next((s for s in steps if str(s.get("id")) == str(step_id)), None)
-            if not step: abort(400)
-            option = next((o for o in step.get("options", []) if str(o.get("id")) == str(option_id)), None)
-            if not option: abort(400)
-            points = int(option.get("points", 0))
-            add("scenario_decision", attempt_id=attempt_id, step_id=str(step_id), option_id=str(option_id),
-                points=points, is_correct=bool(option.get("correct", False)), response_time_ms=0)
+            attempt = one("scenario_attempt", and_(
+                table("scenario_attempt").c.id == attempt_id,
+                table("scenario_attempt").c.user_id == session["user_id"],
+                table("scenario_attempt").c.scenario_id == scenario_id
+            ))
+            if not attempt or attempt["completed_at"] is not None:
+                abort(404)
+
+            decisions_table = table("scenario_decision")
+            previous_decisions = rows(
+                "scenario_decision",
+                decisions_table.c.attempt_id == attempt_id
+            )
+            if any(str(item["step_id"]) == str(step_id) for item in previous_decisions):
+                abort(400)
+
+            # Only allow the first step initially, then the exact step reached
+            # through the previously selected option's nextStepId.
+            expected_step = steps[0] if not previous_decisions else None
+            if previous_decisions:
+                previous_step_id = str(previous_decisions[-1]["step_id"])
+                previous_step = next(
+                    (item for item in steps if str(item.get("id")) == previous_step_id), None
+                )
+                previous_option = next(
+                    (item for item in (previous_step or {}).get("options", [])
+                     if str(item.get("id")) == str(previous_decisions[-1]["option_id"])), None
+                )
+                next_step_id = (previous_option or {}).get("nextStepId")
+                expected_step = next(
+                    (item for item in steps if str(item.get("id")) == str(next_step_id)), None
+                )
+            if not expected_step or str(expected_step.get("id")) != str(step_id):
+                abort(400)
+
+            step = expected_step
+            option = next(
+                (item for item in step.get("options", [])
+                 if str(item.get("id")) == str(option_id)), None
+            )
+            if not option:
+                abort(400)
+
+            try:
+                points = int(option.get("points", 0))
+            except (TypeError, ValueError):
+                abort(400)
+
+            add("scenario_decision", attempt_id=attempt_id, step_id=str(step_id),
+                option_id=str(option_id), points=points,
+                is_correct=bool(option.get("correct", False)), response_time_ms=0)
             db.session.commit()
             next_id = option.get("nextStepId")
             if next_id:
+                next_step = next(
+                    (item for item in steps if str(item.get("id")) == str(next_id)), None
+                )
+                if not next_step:
+                    abort(400)
                 return render_template("scenario_step.html", scenario=sc, attempt_id=attempt_id,
-                    step=next(s for s in steps if str(s.get("id")) == str(next_id)), feedback=option.get("feedback", ""))
+                    step=next_step, feedback=option.get("feedback", ""))
             decisions = rows("scenario_decision", table("scenario_decision").c.attempt_id == attempt_id)
             score = sum(d["points"] for d in decisions)
             max_score = sum(max([int(o.get("points", 0)) for o in s.get("options", [])] or [0]) for s in steps)
@@ -382,5 +475,7 @@ def register_routes(app):
         try:
             db.session.execute(select(1))
             return jsonify(status="ok", database="connected")
-        except Exception as exc:
-            return jsonify(status="error", database="unavailable", detail=str(exc)), 503
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Health check database connection failed")
+            return jsonify(status="error", database="unavailable"), 503
