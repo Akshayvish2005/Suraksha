@@ -704,9 +704,10 @@ def register_routes(app):
         attempts = table("assessment_attempt")
         items = []
         for module in modules:
-            post = one("assessment_attempt", and_(attempts.c.user_id == uid,
-                attempts.c.module_id == module["module_id"], attempts.c.attempt_type == "POST",
-                attempts.c.status == "SUBMITTED"))
+            post = db.session.execute(select(attempts).where(
+                attempts.c.user_id == uid, attempts.c.module_id == module["module_id"],
+                attempts.c.attempt_type == "POST", attempts.c.status == "SUBMITTED"
+            ).order_by(attempts.c.started_at.desc()).limit(1)).mappings().first()
             passed = bool(post and post["score_percent"] is not None and
                           float(post["score_percent"]) >= module["pass_mark_percent"])
             items.append(dict(module_id=module["module_id"], module_title=module["module_title"],
@@ -731,8 +732,10 @@ def register_routes(app):
         if not module:
             abort(404)
         at = table("assessment_attempt")
-        post = one("assessment_attempt", and_(at.c.user_id == uid, at.c.module_id == module_id,
-            at.c.attempt_type == "POST", at.c.status == "SUBMITTED"))
+        post = db.session.execute(select(at).where(
+            at.c.user_id == uid, at.c.module_id == module_id,
+            at.c.attempt_type == "POST", at.c.status == "SUBMITTED"
+        ).order_by(at.c.started_at.desc()).limit(1)).mappings().first()
         if not post or post["score_percent"] is None or float(post["score_percent"]) < module["pass_mark_percent"]:
             abort(403, description="Passing the post-test is required to view this certificate.")
         return render_template("certificate_view.html", module=module,
