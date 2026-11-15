@@ -1,4 +1,5 @@
 import json, csv, io
+from urllib.parse import urlparse
 from datetime import datetime, date
 from flask import render_template, request, redirect, url_for, session, flash, jsonify, abort, Response, g
 from sqlalchemy import select, and_, func
@@ -23,7 +24,11 @@ def register_routes(app):
                 session["user_id"] = user["id"]
                 change("app_user", t.c.id == user["id"], last_login_at=datetime.now())
                 db.session.commit()
-                return redirect(request.args.get("next") or url_for("dashboard"))
+                next_url = request.args.get("next", "")
+                parsed_next = urlparse(next_url)
+                if parsed_next.scheme or parsed_next.netloc or not next_url.startswith("/"):
+                    next_url = url_for("dashboard")
+                return redirect(next_url or url_for("dashboard"))
             flash("Invalid username or password.", "error")
         return render_template("login.html")
 
