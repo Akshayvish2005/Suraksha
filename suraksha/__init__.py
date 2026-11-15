@@ -13,6 +13,8 @@ def create_app(config_class=Config):
         static_folder="../static"
     )
     app.config.from_object(config_class)
+    if hasattr(config_class, "validate"):
+        config_class.validate()
     db.init_app(app)
     migrate.init_app(app, db)
 
