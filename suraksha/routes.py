@@ -63,7 +63,8 @@ def register_routes(app):
     @app.get("/modules/<int:module_id>")
     @login_required
     def module_detail(module_id):
-        m = one("learning_module", table("learning_module").c.id == module_id)
+        mt = table("learning_module")
+        m = one("learning_module", and_(mt.c.id == module_id, mt.c.status == "PUBLISHED"))
         if not m: abort(404)
         tx = one("module_text", and_(table("module_text").c.module_id == module_id,
                                      table("module_text").c.language == (g.user["language"] or "en")))
@@ -80,8 +81,12 @@ def register_routes(app):
     @app.get("/lessons/<int:lesson_id>")
     @login_required
     def lesson_detail(lesson_id):
-        lesson = one("lesson", table("lesson").c.id == lesson_id)
+        lesson_table = table("lesson")
+        lesson = one("lesson", and_(lesson_table.c.id == lesson_id, lesson_table.c.status == "PUBLISHED"))
         if not lesson: abort(404)
+        module_table = table("learning_module")
+        published_module = one("learning_module", and_(module_table.c.id == lesson["module_id"], module_table.c.status == "PUBLISHED"))
+        if not published_module: abort(404)
         tx = one("lesson_text", and_(table("lesson_text").c.lesson_id == lesson_id,
                                      table("lesson_text").c.language == (g.user["language"] or "en")))
         return render_template("lesson.html", lesson=lesson, lesson_text=tx)
@@ -93,8 +98,11 @@ def register_routes(app):
         mp = table("module_progress")
         lt = table("lesson")
 
-        lesson = one("lesson", lt.c.id == lesson_id)
+        lesson = one("lesson", and_(lt.c.id == lesson_id, lt.c.status == "PUBLISHED"))
         if not lesson:
+            abort(404)
+        module_table = table("learning_module")
+        if not one("learning_module", and_(module_table.c.id == lesson["module_id"], module_table.c.status == "PUBLISHED")):
             abort(404)
 
         uid = session["user_id"]
@@ -150,7 +158,8 @@ def register_routes(app):
                 "module_progress",
                 and_(mp.c.user_id == uid, mp.c.module_id == module_id),
                 status=new_status,
-                started_at=existing_module["started_at"] or datetime.now()
+                started_at=existing_module["started_at"] or datetime.now(),
+                completed_at=datetime.now() if all_completed else None
             )
         else:
             add(
@@ -158,7 +167,8 @@ def register_routes(app):
                 user_id=uid,
                 module_id=module_id,
                 status=new_status,
-                started_at=datetime.now()
+                started_at=datetime.now(),
+                completed_at=datetime.now() if all_completed else None
             )
 
         db.session.commit()
@@ -453,7 +463,9 @@ def register_routes(app):
     @app.get("/api/v1/modules")
     @login_required
     def api_modules():
-        return jsonify([dict(x) for x in db.session.execute(select(table("learning_module"))).mappings().all()])
+        modules_table = table("learning_module")
+        published = db.session.execute(select(modules_table).where(modules_table.c.status == "PUBLISHED")).mappings().all()
+        return jsonify([dict(x) for x in published])
 
     @app.get("/api/v1/notifications")
     @login_required
