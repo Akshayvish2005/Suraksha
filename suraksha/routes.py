@@ -195,6 +195,10 @@ def register_routes(app):
         attempt_type = attempt_type.upper()
         if attempt_type not in ("PRE", "POST"): abort(404)
         uid = session["user_id"]
+        module_table = table("learning_module")
+        if not one("learning_module", and_(module_table.c.id == module_id,
+                                           module_table.c.status == "PUBLISHED")):
+            abort(404)
         if request.method == "POST":
             try:
                 aid = int(request.form.get("attempt_id", ""))
@@ -296,9 +300,17 @@ def register_routes(app):
     @app.route("/scenarios/<int:scenario_id>", methods=["GET", "POST"])
     @login_required
     def scenario(scenario_id):
-        sc = one("scenario", table("scenario").c.id == scenario_id)
+        scenario_table = table("scenario")
+        sc = one("scenario", and_(scenario_table.c.id == scenario_id,
+                                  scenario_table.c.status == "PUBLISHED"))
         if not sc: abort(404)
-        definition = json.loads(sc["definition"] or "{}")
+        try:
+            definition = json.loads(sc["definition"] or "{}")
+        except (TypeError, ValueError):
+            app.logger.exception("Invalid scenario definition for scenario %s", scenario_id)
+            abort(500, description="This scenario is temporarily unavailable.")
+        if not isinstance(definition, dict) or not isinstance(definition.get("steps", []), list):
+            abort(500, description="This scenario is temporarily unavailable.")
         steps = definition.get("steps", [])
         if request.method == "POST":
             attempt_id = int(request.form["attempt_id"])
@@ -313,10 +325,10 @@ def register_routes(app):
                 abort(404)
 
             decisions_table = table("scenario_decision")
-            previous_decisions = rows(
-                "scenario_decision",
-                decisions_table.c.attempt_id == attempt_id
-            )
+            previous_decisions = db.session.execute(
+                select(decisions_table).where(decisions_table.c.attempt_id == attempt_id)
+                .order_by(decisions_table.c.id)
+            ).mappings().all()
             if any(str(item["step_id"]) == str(step_id) for item in previous_decisions):
                 abort(400)
 
@@ -494,7 +506,7 @@ def register_routes(app):
         participant = one("drill_participant", and_(
             pt.c.drill_id == drill_id, pt.c.user_id == session["user_id"]
         ))
-        if not participant or participant["status"] not in ("JOINED", "ASSIGNED"):
+        if not participant or participant["status"] != "JOINED":
             abort(403)
         route_id = request.form.get("evacuation_route_id") or None
         try:
