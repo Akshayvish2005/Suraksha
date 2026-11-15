@@ -181,32 +181,74 @@ def register_routes(app):
         if attempt_type not in ("PRE", "POST"): abort(404)
         uid = session["user_id"]
         if request.method == "POST":
-            aid = int(request.form["attempt_id"])
-            attempt = one("assessment_attempt", and_(table("assessment_attempt").c.id == aid,
-                         table("assessment_attempt").c.user_id == uid))
-            if not attempt or attempt["status"] != "IN_PROGRESS": abort(404)
-            qids = request.form.getlist("question_id")
+            try:
+                aid = int(request.form.get("attempt_id", ""))
+            except (TypeError, ValueError):
+                abort(400)
+            at = table("assessment_attempt")
+            attempt = one("assessment_attempt", and_(
+                at.c.id == aid, at.c.user_id == uid, at.c.module_id == module_id,
+                at.c.attempt_type == attempt_type
+            ))
+            if not attempt or attempt["status"] != "IN_PROGRESS":
+                abort(404)
+
+            q = table("question")
+            ao = table("answer_option")
+            raw_qids = request.form.getlist("question_id")
+            try:
+                qids = [int(value) for value in raw_qids]
+            except (TypeError, ValueError):
+                abort(400)
+            if not qids or len(qids) != len(set(qids)):
+                abort(400)
+
+            valid_questions = rows("question", and_(
+                q.c.id.in_(qids), q.c.module_id == module_id,
+                q.c.status == "PUBLISHED", q.c.purpose.in_([attempt_type, "BOTH"])
+            ))
+            if len(valid_questions) != len(qids):
+                abort(400)
+
             correct_count = 0
             for qid in qids:
-                selected_ids = request.form.getlist(f"answer_{qid}")
-                if not selected_ids: continue
-                correct_options = rows("answer_option", and_(table("answer_option").c.question_id == int(qid),
-                                                               table("answer_option").c.is_correct == True))
-                correct_set = {str(o["id"]) for o in correct_options}
-                is_correct = set(selected_ids) == correct_set
+                selected_raw = request.form.getlist(f"answer_{qid}")
+                try:
+                    selected_ids = {int(value) for value in selected_raw}
+                except (TypeError, ValueError):
+                    abort(400)
+                if not selected_ids:
+                    abort(400)
+
+                valid_options = rows("answer_option", and_(
+                    ao.c.question_id == qid, ao.c.id.in_(selected_ids)
+                ))
+                if len(valid_options) != len(selected_ids):
+                    abort(400)
+
+                correct_options = rows("answer_option", and_(
+                    ao.c.question_id == qid, ao.c.is_correct == True
+                ))
+                correct_set = {int(option["id"]) for option in correct_options}
+                is_correct = selected_ids == correct_set
                 correct_count += int(is_correct)
-                aaid = add("attempt_answer", attempt_id=aid, question_id=int(qid), is_correct=is_correct)
-                for oid in selected_ids:
-                    opt = one("answer_option", and_(table("answer_option").c.id == int(oid),
-                                                    table("answer_option").c.question_id == int(qid)))
-                    if opt: add("attempt_answer_option", attempt_answer_id=aaid, option_id=int(oid))
+                answer_id = add(
+                    "attempt_answer", attempt_id=aid,
+                    question_id=qid, is_correct=is_correct
+                )
+                for option_id in selected_ids:
+                    add("attempt_answer_option", attempt_answer_id=answer_id, option_id=option_id)
+
             total = len(qids)
-            pct = round(100 * correct_count / total, 2) if total else 0
-            change("assessment_attempt", table("assessment_attempt").c.id == aid,
+            pct = round(100 * correct_count / total, 2)
+            change("assessment_attempt", at.c.id == aid,
                    status="SUBMITTED", total_questions=total, correct_count=correct_count,
                    score_percent=pct, submitted_at=datetime.now())
             db.session.commit()
-            return render_template("assessment_result.html", score=pct, correct=correct_count, total=total)
+            return render_template(
+                "assessment_result.html", score=pct,
+                correct=correct_count, total=total
+            )
         aid = add("assessment_attempt", user_id=uid, module_id=module_id, attempt_type=attempt_type,
                   status="IN_PROGRESS", started_at=datetime.now())
         db.session.commit()
