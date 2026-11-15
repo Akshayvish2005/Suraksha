@@ -289,21 +289,67 @@ def register_routes(app):
             attempt_id = int(request.form["attempt_id"])
             step_id = request.form.get("step_id")
             option_id = request.form.get("option_id")
-            attempt = one("scenario_attempt", and_(table("scenario_attempt").c.id == attempt_id,
-                           table("scenario_attempt").c.user_id == session["user_id"]))
-            if not attempt: abort(404)
-            step = next((s for s in steps if str(s.get("id")) == str(step_id)), None)
-            if not step: abort(400)
-            option = next((o for o in step.get("options", []) if str(o.get("id")) == str(option_id)), None)
-            if not option: abort(400)
-            points = int(option.get("points", 0))
-            add("scenario_decision", attempt_id=attempt_id, step_id=str(step_id), option_id=str(option_id),
-                points=points, is_correct=bool(option.get("correct", False)), response_time_ms=0)
+            attempt = one("scenario_attempt", and_(
+                table("scenario_attempt").c.id == attempt_id,
+                table("scenario_attempt").c.user_id == session["user_id"],
+                table("scenario_attempt").c.scenario_id == scenario_id
+            ))
+            if not attempt or attempt["completed_at"] is not None:
+                abort(404)
+
+            decisions_table = table("scenario_decision")
+            previous_decisions = rows(
+                "scenario_decision",
+                decisions_table.c.attempt_id == attempt_id
+            )
+            if any(str(item["step_id"]) == str(step_id) for item in previous_decisions):
+                abort(400)
+
+            # Only allow the first step initially, then the exact step reached
+            # through the previously selected option's nextStepId.
+            expected_step = steps[0] if not previous_decisions else None
+            if previous_decisions:
+                previous_step_id = str(previous_decisions[-1]["step_id"])
+                previous_step = next(
+                    (item for item in steps if str(item.get("id")) == previous_step_id), None
+                )
+                previous_option = next(
+                    (item for item in (previous_step or {}).get("options", [])
+                     if str(item.get("id")) == str(previous_decisions[-1]["option_id"])), None
+                )
+                next_step_id = (previous_option or {}).get("nextStepId")
+                expected_step = next(
+                    (item for item in steps if str(item.get("id")) == str(next_step_id)), None
+                )
+            if not expected_step or str(expected_step.get("id")) != str(step_id):
+                abort(400)
+
+            step = expected_step
+            option = next(
+                (item for item in step.get("options", [])
+                 if str(item.get("id")) == str(option_id)), None
+            )
+            if not option:
+                abort(400)
+
+            try:
+                points = int(option.get("points", 0))
+            except (TypeError, ValueError):
+                abort(400)
+
+            add("scenario_decision", attempt_id=attempt_id, step_id=str(step_id),
+                option_id=str(option_id), points=points,
+                is_correct=bool(option.get("correct", False)), response_time_ms=0)
             db.session.commit()
             next_id = option.get("nextStepId")
             if next_id:
+                next_step = next(
+                    (item for item in steps if str(item.get("id")) == str(next_id)), None
+                )
+                if not next_step:
+                    abort(400)
                 return render_template("scenario_step.html", scenario=sc, attempt_id=attempt_id,
-                    step=next(s for s in steps if str(s.get("id")) == str(next_id)), feedback=option.get("feedback", ""))
+                    step=next_step, feedback=option.get("feedback", ""))
             decisions = rows("scenario_decision", table("scenario_decision").c.attempt_id == attempt_id)
             score = sum(d["points"] for d in decisions)
             max_score = sum(max([int(o.get("points", 0)) for o in s.get("options", [])] or [0]) for s in steps)
@@ -424,5 +470,7 @@ def register_routes(app):
         try:
             db.session.execute(select(1))
             return jsonify(status="ok", database="connected")
-        except Exception as exc:
-            return jsonify(status="error", database="unavailable", detail=str(exc)), 503
+        except Exception:
+            db.session.rollback()
+            app.logger.exception("Health check database connection failed")
+            return jsonify(status="error", database="unavailable"), 503
