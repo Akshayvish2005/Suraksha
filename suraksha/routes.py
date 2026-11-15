@@ -398,6 +398,9 @@ def register_routes(app):
                 return redirect(url_for("create_drill"))
             scenario_row = one("scenario", table("scenario").c.id == int(form["scenario_id"]))
             if not scenario_row: abort(400)
+            if g.user["institution_id"] is None:
+                flash("A system administrator must select an institution before creating a drill.", "error")
+                return redirect(url_for("drills"))
             did = add("drill", institution_id=g.user["institution_id"], hazard_id=scenario_row["hazard_id"],
                 scenario_id=scenario_row["id"], title=form["title"], created_by=session["user_id"],
                 start_time=start, end_time=end, campus_wide=bool(form.get("campus_wide")),
@@ -449,7 +452,8 @@ def register_routes(app):
         participant = one("drill_participant", and_(
             pt.c.drill_id == drill_id, pt.c.user_id == session["user_id"]
         ))
-        return render_template("drill_detail.html", drill=drill, participant=participant)
+        routes = rows("evacuation_route", table("evacuation_route").c.institution_id == drill["institution_id"])
+        return render_template("drill_detail.html", drill=drill, participant=participant, routes=routes)
 
     @app.post("/drills/<int:drill_id>/join")
     @login_required
