@@ -402,11 +402,137 @@ def register_routes(app):
                 scenario_id=scenario_row["id"], title=form["title"], created_by=session["user_id"],
                 start_time=start, end_time=end, campus_wide=bool(form.get("campus_wide")),
                 status="SCHEDULED", mode="SELF_PACED")
+            # The creator is automatically enrolled as a floor warden.
+            participant_table = table("drill_participant")
+            existing_creator = one("drill_participant", and_(
+                participant_table.c.drill_id == did,
+                participant_table.c.user_id == session["user_id"]
+            ))
+            if not existing_creator:
+                add("drill_participant", drill_id=did, user_id=session["user_id"],
+                    drill_role="FLOOR_WARDEN", status="ASSIGNED")
+            # Campus-wide drills create participant assignments for active users in the institution.
+            if bool(form.get("campus_wide")):
+                users_table = table("app_user")
+                institution_users = rows("app_user", and_(
+                    users_table.c.institution_id == g.user["institution_id"],
+                    users_table.c.active.is_(True)
+                ))
+                for member in institution_users:
+                    if member["id"] == session["user_id"]:
+                        continue
+                    if not one("drill_participant", and_(
+                        participant_table.c.drill_id == did,
+                        participant_table.c.user_id == member["id"]
+                    )):
+                        add("drill_participant", drill_id=did, user_id=member["id"],
+                            drill_role="STUDENT", status="ASSIGNED")
+                    add("notification", user_id=member["id"], notification_type="DRILL_SCHEDULED",
+                        message=f"New campus-wide drill scheduled: {form['title']}",
+                        link=url_for("drill_detail", drill_id=did))
             db.session.commit()
-            flash("Drill created. Add group participants through the drill administration workflow.", "success")
-            return redirect(url_for("drills"))
+            flash("Drill created and participants assigned.", "success")
+            return redirect(url_for("drill_detail", drill_id=did))
         scenarios = rows("scenario", table("scenario").c.status == "PUBLISHED")
         return render_template("drill_create.html", scenarios=scenarios)
+
+    @app.get("/drills/<int:drill_id>")
+    @login_required
+    def drill_detail(drill_id):
+        dt = table("drill")
+        drill = one("drill", dt.c.id == drill_id)
+        if not drill:
+            abort(404)
+        if g.user["role"] != "SYSTEM_ADMIN" and drill["institution_id"] != g.user["institution_id"]:
+            abort(403)
+        pt = table("drill_participant")
+        participant = one("drill_participant", and_(
+            pt.c.drill_id == drill_id, pt.c.user_id == session["user_id"]
+        ))
+        return render_template("drill_detail.html", drill=drill, participant=participant)
+
+    @app.post("/drills/<int:drill_id>/join")
+    @login_required
+    def join_drill(drill_id):
+        dt, pt = table("drill"), table("drill_participant")
+        drill = one("drill", dt.c.id == drill_id)
+        if not drill:
+            abort(404)
+        if g.user["role"] != "SYSTEM_ADMIN" and drill["institution_id"] != g.user["institution_id"]:
+            abort(403)
+        now = datetime.now()
+        if drill["status"] in ("CLOSED", "CANCELLED") or now < drill["start_time"] or now > drill["end_time"]:
+            flash("This drill is not currently open for participation.", "error")
+            return redirect(url_for("drill_detail", drill_id=drill_id))
+        participant = one("drill_participant", and_(
+            pt.c.drill_id == drill_id, pt.c.user_id == session["user_id"]
+        ))
+        if not participant and not drill["campus_wide"]:
+            abort(403)
+        if not participant:
+            add("drill_participant", drill_id=drill_id, user_id=session["user_id"],
+                drill_role="STUDENT", status="JOINED", joined_at=now)
+        elif participant["status"] not in ("COMPLETED", "MISSED"):
+            change("drill_participant", and_(pt.c.drill_id == drill_id,
+                pt.c.user_id == session["user_id"]), status="JOINED", joined_at=participant["joined_at"] or now)
+        db.session.commit()
+        return redirect(url_for("drill_detail", drill_id=drill_id))
+
+    @app.post("/drills/<int:drill_id>/complete")
+    @login_required
+    def complete_drill(drill_id):
+        dt, pt = table("drill"), table("drill_participant")
+        drill = one("drill", dt.c.id == drill_id)
+        if not drill:
+            abort(404)
+        if g.user["role"] != "SYSTEM_ADMIN" and drill["institution_id"] != g.user["institution_id"]:
+            abort(403)
+        participant = one("drill_participant", and_(
+            pt.c.drill_id == drill_id, pt.c.user_id == session["user_id"]
+        ))
+        if not participant or participant["status"] not in ("JOINED", "ASSIGNED"):
+            abort(403)
+        route_id = request.form.get("evacuation_route_id") or None
+        try:
+            route_id = int(route_id) if route_id else None
+            evacuation_seconds = max(0, min(int(request.form.get("evacuation_time_seconds", "120")), 86400))
+        except (TypeError, ValueError):
+            abort(400)
+        if route_id:
+            rt = table("evacuation_route")
+            route = one("evacuation_route", and_(rt.c.id == route_id,
+                rt.c.institution_id == drill["institution_id"]))
+            if not route:
+                abort(400)
+        change("drill_participant", and_(pt.c.drill_id == drill_id,
+            pt.c.user_id == session["user_id"]), status="COMPLETED",
+            completed_at=datetime.now(), evacuation_route_id=route_id,
+            evacuation_time_seconds=evacuation_seconds)
+        db.session.commit()
+        flash("Drill completion recorded.", "success")
+        return redirect(url_for("drill_detail", drill_id=drill_id))
+
+    @app.get("/drills/<int:drill_id>/report")
+    @roles_required("TEACHER", "INSTITUTION_ADMIN", "SYSTEM_ADMIN")
+    def drill_report(drill_id):
+        dt, pt = table("drill"), table("drill_participant")
+        drill = one("drill", dt.c.id == drill_id)
+        if not drill:
+            abort(404)
+        if g.user["role"] != "SYSTEM_ADMIN" and drill["institution_id"] != g.user["institution_id"]:
+            abort(403)
+        participants = db.session.execute(select(pt, table("app_user").c.full_name,
+                table("app_user").c.username, table("evacuation_route").c.name.label("route_name"))
+            .join(table("app_user"), table("app_user").c.id == pt.c.user_id)
+            .outerjoin(table("evacuation_route"), table("evacuation_route").c.id == pt.c.evacuation_route_id)
+            .where(pt.c.drill_id == drill_id).order_by(table("app_user").c.full_name)).mappings().all()
+        total = len(participants)
+        completed = sum(1 for p in participants if p["status"] == "COMPLETED")
+        times = [p["evacuation_time_seconds"] for p in participants if p["evacuation_time_seconds"]]
+        average = round(sum(times) / len(times)) if times else 0
+        return render_template("drill_report.html", drill=drill, participants=participants,
+            total=total, completed=completed, participation_pct=round(completed * 100 / total) if total else 0,
+            average_evacuation_seconds=average)
 
     @app.get("/emergency")
     @login_required
