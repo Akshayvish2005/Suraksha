@@ -4,7 +4,7 @@ from datetime import datetime, date
 from flask import render_template, request, redirect, url_for, session, flash, jsonify, abort, Response, g
 from sqlalchemy import select, and_, func
 from .extensions import db
-from .db_helpers import table, rows, one, add, change
+from .db_helpers import table, rows, one, add, change, remove
 from .auth import login_required, roles_required, verify_password
 
 def register_routes(app):
@@ -541,27 +541,143 @@ def register_routes(app):
     @app.get("/emergency")
     @login_required
     def emergency():
-        contacts = db.session.execute(select(table("emergency_contact")).where(
-            (table("emergency_contact").c.institution_id == g.user["institution_id"]) |
-            (table("emergency_contact").c.is_national == True)).order_by(table("emergency_contact").c.sort_order)).mappings().all()
-        plan = one("emergency_plan", table("emergency_plan").c.institution_id == g.user["institution_id"])
-        routes = rows("evacuation_route", table("evacuation_route").c.institution_id == g.user["institution_id"])
-        return render_template("emergency.html", contacts=contacts, plan=plan, routes=routes)
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            contacts = rows("emergency_contact", table("emergency_contact").c.is_national.is_(True),
+                            table("emergency_contact").c.sort_order)
+            plan = None
+            routes = []
+            checklist_items = rows("checklist_item", order=table("checklist_item").c.sort_order)
+            status_map = {}
+        else:
+            ct = table("emergency_contact")
+            contacts = db.session.execute(select(ct).where(
+                (ct.c.institution_id == institution_id) | ct.c.is_national.is_(True)
+            ).order_by(ct.c.sort_order, ct.c.id)).mappings().all()
+            plan = one("emergency_plan", table("emergency_plan").c.institution_id == institution_id)
+            routes = rows("evacuation_route", table("evacuation_route").c.institution_id == institution_id,
+                          table("evacuation_route").c.sort_order)
+            checklist_items = rows("checklist_item", order=table("checklist_item").c.sort_order)
+            st = table("checklist_status")
+            statuses = rows("checklist_status", st.c.institution_id == institution_id)
+            status_map = {s["item_id"]: s for s in statuses}
+        checked_count = sum(1 for item in checklist_items
+                            if status_map.get(item["id"]) and status_map[item["id"]]["is_checked"])
+        checklist = [{"item": item, "checked": bool(status_map.get(item["id"]) and
+                      status_map[item["id"]]["is_checked"])} for item in checklist_items]
+        return render_template("emergency.html", contacts=contacts, plan=plan, routes=routes,
+            checklist=checklist, checklist_checked_count=checked_count,
+            checklist_total_count=len(checklist_items))
+
+    @app.post("/emergency/checklist/toggle")
+    @login_required
+    def toggle_checklist():
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(403)
+        try:
+            item_id = int(request.form.get("item_id", ""))
+        except (TypeError, ValueError):
+            abort(400)
+        item = one("checklist_item", table("checklist_item").c.id == item_id)
+        if not item:
+            abort(404)
+        checked = request.form.get("checked") == "true"
+        st = table("checklist_status")
+        existing = one("checklist_status", and_(st.c.institution_id == institution_id,
+                                                  st.c.item_id == item_id))
+        values = dict(is_checked=checked, checked_by=session["user_id"],
+                      checked_on=date.today() if checked else None)
+        if existing:
+            change("checklist_status", and_(st.c.institution_id == institution_id,
+                                             st.c.item_id == item_id), **values)
+        else:
+            add("checklist_status", institution_id=institution_id, item_id=item_id, **values)
+        db.session.commit()
+        return redirect(url_for("emergency"))
 
     @app.post("/emergency/plan")
     @roles_required("INSTITUTION_ADMIN", "SYSTEM_ADMIN")
     def save_plan():
-        content = request.form.get("content", "")
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(400, description="Select an institution before editing its emergency plan.")
+        content = request.form.get("content", "").strip()
+        if len(content) > 20000:
+            abort(400, description="Emergency plan is too long.")
         t = table("emergency_plan")
-        current = one("emergency_plan", t.c.institution_id == g.user["institution_id"])
+        current = one("emergency_plan", t.c.institution_id == institution_id)
+        values = dict(content=content, updated_by=session["user_id"], updated_at=datetime.now())
         if current:
-            change("emergency_plan", t.c.id == current["id"], content=content,
-                   updated_by=session["user_id"], updated_at=datetime.now())
+            change("emergency_plan", t.c.id == current["id"], **values)
         else:
-            add("emergency_plan", institution_id=g.user["institution_id"], content=content,
-                updated_by=session["user_id"], updated_at=datetime.now())
+            add("emergency_plan", institution_id=institution_id, **values)
         db.session.commit()
         flash("Emergency plan saved.", "success")
+        return redirect(url_for("emergency"))
+
+    @app.post("/emergency/contacts")
+    @roles_required("INSTITUTION_ADMIN", "SYSTEM_ADMIN")
+    def create_emergency_contact():
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(400, description="Select an institution before adding a contact.")
+        name = request.form.get("name", "").strip()
+        phone = request.form.get("phone", "").strip()
+        category = request.form.get("category", "").strip()
+        if not name or not phone or len(name) > 150 or len(phone) > 30 or len(category) > 50:
+            abort(400, description="Enter a valid contact name, phone and category.")
+        add("emergency_contact", institution_id=institution_id, name=name, phone=phone,
+            category=category or "Emergency", is_national=False, sort_order=100)
+        db.session.commit()
+        flash("Emergency contact added.", "success")
+        return redirect(url_for("emergency"))
+
+    @app.post("/emergency/contacts/<int:contact_id>/delete")
+    @roles_required("INSTITUTION_ADMIN", "SYSTEM_ADMIN")
+    def delete_emergency_contact(contact_id):
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(400)
+        ct = table("emergency_contact")
+        deleted = remove("emergency_contact", and_(ct.c.id == contact_id,
+            ct.c.institution_id == institution_id, ct.c.is_national.is_(False)))
+        if not deleted:
+            abort(404)
+        db.session.commit()
+        flash("Emergency contact deleted.", "success")
+        return redirect(url_for("emergency"))
+
+    @app.post("/emergency/routes")
+    @roles_required("INSTITUTION_ADMIN", "SYSTEM_ADMIN")
+    def create_evacuation_route():
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(400, description="Select an institution before adding a route.")
+        name = request.form.get("name", "").strip()
+        assembly_point = request.form.get("assembly_point", "").strip()
+        description = request.form.get("description", "").strip()
+        if not name or len(name) > 150 or len(assembly_point) > 200 or len(description) > 1000:
+            abort(400, description="Enter valid evacuation route details.")
+        add("evacuation_route", institution_id=institution_id, name=name,
+            description=description, assembly_point=assembly_point, image_path=None, sort_order=100)
+        db.session.commit()
+        flash("Evacuation route added.", "success")
+        return redirect(url_for("emergency"))
+
+    @app.post("/emergency/routes/<int:route_id>/delete")
+    @roles_required("INSTITUTION_ADMIN", "SYSTEM_ADMIN")
+    def delete_evacuation_route(route_id):
+        institution_id = g.user["institution_id"]
+        if institution_id is None:
+            abort(400)
+        rt = table("evacuation_route")
+        deleted = remove("evacuation_route", and_(rt.c.id == route_id,
+            rt.c.institution_id == institution_id))
+        if not deleted:
+            abort(404)
+        db.session.commit()
+        flash("Evacuation route deleted.", "success")
         return redirect(url_for("emergency"))
 
     @app.get("/progress")
@@ -576,7 +692,52 @@ def register_routes(app):
     @app.get("/certificates")
     @login_required
     def certificates():
-        return render_template("message.html", title="Certificates", message="Certificate eligibility is based on completed learning and assessment requirements. The certificate page is ready for the issuing policy to be configured.")
+        uid = session["user_id"]
+        language = g.user["language"] or "en"
+        lm, hz, mt = table("learning_module"), table("hazard"), table("module_text")
+        modules = db.session.execute(select(lm.c.id.label("module_id"), lm.c.pass_mark_percent,
+            hz.c.code.label("hazard_code"), hz.c.name_en.label("hazard_name"),
+            mt.c.title.label("module_title")).join(hz, hz.c.id == lm.c.hazard_id)
+            .join(mt, mt.c.module_id == lm.c.id)
+            .where(lm.c.status == "PUBLISHED", mt.c.language == language)
+            .order_by(lm.c.sort_order)).mappings().all()
+        attempts = table("assessment_attempt")
+        items = []
+        for module in modules:
+            post = one("assessment_attempt", and_(attempts.c.user_id == uid,
+                attempts.c.module_id == module["module_id"], attempts.c.attempt_type == "POST",
+                attempts.c.status == "SUBMITTED"))
+            passed = bool(post and post["score_percent"] is not None and
+                          float(post["score_percent"]) >= module["pass_mark_percent"])
+            items.append(dict(module_id=module["module_id"], module_title=module["module_title"],
+                hazard_code=module["hazard_code"], hazard_name=module["hazard_name"],
+                is_unlocked=passed, score_percent=round(float(post["score_percent"])) if post and
+                post["score_percent"] is not None else None,
+                issued_at=post["submitted_at"] if passed else None,
+                certificate_id=f"SURAKSHA-{module['hazard_code']}-{uid:04d}"))
+        return render_template("certificates.html", certificates=items)
+
+    @app.get("/certificates/<int:module_id>/view")
+    @login_required
+    def view_certificate(module_id):
+        uid = session["user_id"]
+        lm, hz, mt = table("learning_module"), table("hazard"), table("module_text")
+        module = db.session.execute(select(lm.c.id.label("module_id"), lm.c.pass_mark_percent,
+            hz.c.code.label("hazard_code"), hz.c.name_en.label("hazard_name"),
+            mt.c.title.label("module_title")).join(hz, hz.c.id == lm.c.hazard_id)
+            .join(mt, mt.c.module_id == lm.c.id)
+            .where(lm.c.id == module_id, lm.c.status == "PUBLISHED",
+                   mt.c.language == (g.user["language"] or "en"))).mappings().first()
+        if not module:
+            abort(404)
+        at = table("assessment_attempt")
+        post = one("assessment_attempt", and_(at.c.user_id == uid, at.c.module_id == module_id,
+            at.c.attempt_type == "POST", at.c.status == "SUBMITTED"))
+        if not post or post["score_percent"] is None or float(post["score_percent"]) < module["pass_mark_percent"]:
+            abort(403, description="Passing the post-test is required to view this certificate.")
+        return render_template("certificate_view.html", module=module,
+            score=round(float(post["score_percent"])), issued_at=post["submitted_at"],
+            certificate_id=f"SURAKSHA-{module['hazard_code']}-{uid:04d}")
 
     @app.get("/profile")
     @login_required
