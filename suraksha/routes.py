@@ -222,6 +222,13 @@ def register_routes(app):
             if not qids or len(qids) != len(set(qids)):
                 abort(400)
 
+            expected_questions = rows("question", and_(
+                q.c.module_id == module_id, q.c.status == "PUBLISHED",
+                q.c.purpose.in_([attempt_type, "BOTH"])
+            ))
+            expected_qids = {int(item["id"]) for item in expected_questions}
+            if not expected_qids or set(qids) != expected_qids:
+                abort(400, description="Submit an answer for every published question.")
             valid_questions = rows("question", and_(
                 q.c.id.in_(qids), q.c.module_id == module_id,
                 q.c.status == "PUBLISHED", q.c.purpose.in_([attempt_type, "BOTH"])
