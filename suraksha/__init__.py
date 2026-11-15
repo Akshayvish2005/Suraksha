@@ -1,4 +1,5 @@
-from flask import Flask, g, render_template
+import secrets
+from flask import Flask, g, render_template, request, session, abort
 import bleach
 from sqlalchemy import inspect
 from config import Config
@@ -17,6 +18,21 @@ def create_app(config_class=Config):
         config_class.validate()
     db.init_app(app)
     migrate.init_app(app, db)
+
+    @app.context_processor
+    def inject_csrf_token():
+        if "_csrf_token" not in session:
+            session["_csrf_token"] = secrets.token_urlsafe(32)
+        return {"csrf_token": session["_csrf_token"]}
+
+    @app.before_request
+    def protect_state_changing_requests():
+        if request.method not in {"POST", "PUT", "PATCH", "DELETE"}:
+            return
+        supplied = request.form.get("_csrf_token") or request.headers.get("X-CSRFToken")
+        expected = session.get("_csrf_token")
+        if not expected or not supplied or not secrets.compare_digest(expected, supplied):
+            abort(400, description="Invalid or missing CSRF token.")
 
     @app.before_request
     def before_request():
